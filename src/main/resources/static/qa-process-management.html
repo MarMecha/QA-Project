@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Διαχείριση QA Διαδικασιών</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-4">🛠️ Διαχείριση QA Διαδικασιών</h1>
+
+    <h2>Ατομικές Διαδικασίες</h2>
+    <table class="table table-bordered mb-5">
+      <thead>
+        <tr>
+          <th>Διαδικασία</th>
+          <th>Περιγραφή</th>
+          <th>Υπάλληλος</th>
+          <th>Θέση</th>
+          <th>Διάγραμμα</th>
+          <th>Ενέργειες</th>
+        </tr>
+      </thead>
+      <tbody id="individualTable"></tbody>
+    </table>
+
+    <h2>Διαδικασίες Groups</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Διαδικασία</th>
+          <th>Περιγραφή</th>
+          <th>Group</th>
+          <th>Μέλη</th>
+          <th>Διάγραμμα</th>
+          <th>Ενέργειες</th>
+        </tr>
+      </thead>
+      <tbody id="groupTable"></tbody>
+    </table>
+
+    <a href="admin-dashboard.html" class="btn btn-secondary mt-4">⬅️ Πίσω</a>
+  </div>
+
+  <script>
+    let indData = [];
+    let groupData = [];
+
+    async function loadIndividual() {
+      const res = await fetch('/api/qa/all');
+      indData = await res.json();
+      const table = document.getElementById('individualTable');
+      table.innerHTML = '';
+      indData.forEach((p, idx) => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.fullName || ''}</td>
+          <td>${p.position || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-2" onclick="editInd(${idx})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteInd(${p.id})">🗑️</button>
+          </td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function loadGroups() {
+      const res = await fetch('/api/qa/group-all');
+      groupData = await res.json();
+      const table = document.getElementById('groupTable');
+      table.innerHTML = '';
+      groupData.forEach((p, idx) => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.groupName || ''}</td>
+          <td>${p.members || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-2" onclick="editGroup(${idx})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteGroup(${p.id})">🗑️</button>
+          </td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    function editInd(idx) {
+      const p = indData[idx];
+      const processName = prompt('Όνομα Διαδικασίας', p.processName);
+      if (processName === null) return;
+      const description = prompt('Περιγραφή', p.description);
+      if (description === null) return;
+      const bpmnFileName = prompt('Αρχείο BPMN', p.bpmnFileName || '');
+      if (bpmnFileName === null) return;
+      const fullName = prompt('Υπάλληλος', p.fullName);
+      if (fullName === null) return;
+      const position = prompt('Θέση', p.position);
+      if (position === null) return;
+      fetch('/api/qa/' + p.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processName, description, bpmnFileName, fullName, position })
+      }).then(loadAll);
+    }
+
+    function deleteInd(id) {
+      if (!confirm('Διαγραφή διαδικασίας;')) return;
+      fetch('/api/qa/' + id, { method: 'DELETE' }).then(loadAll);
+    }
+
+    function editGroup(idx) {
+      const p = groupData[idx];
+      const processName = prompt('Όνομα Διαδικασίας', p.processName);
+      if (processName === null) return;
+      const description = prompt('Περιγραφή', p.description);
+      if (description === null) return;
+      const bpmnFileName = prompt('Αρχείο BPMN', p.bpmnFileName || '');
+      if (bpmnFileName === null) return;
+      const groupName = prompt('Όνομα Group', p.groupName);
+      if (groupName === null) return;
+      const members = prompt('Μέλη', p.members);
+      if (members === null) return;
+      fetch('/api/qa/group/' + p.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processName, description, bpmnFileName, groupName, members })
+      }).then(loadAll);
+    }
+
+    function deleteGroup(id) {
+      if (!confirm('Διαγραφή διαδικασίας;')) return;
+      fetch('/api/qa/group/' + id, { method: 'DELETE' }).then(loadAll);
+    }
+
+    function loadAll() {
+      loadIndividual();
+      loadGroups();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadAll);
+  </script>
+</body>
+</html>

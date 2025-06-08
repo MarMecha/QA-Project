@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Φόρμες Αξιολόγησης</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-4">📋 Διαθέσιμες Φόρμες Αξιολόγησης</h1>
+
+    <ul class="list-group" id="formList">
+      <li class="list-group-item text-muted">⏳ Φόρτωση...</li>
+    </ul>
+  </div>
+
+  <script>
+    async function loadForms() {
+      const list = document.getElementById("formList");
+      list.innerHTML = "";
+
+      try {
+        const res = await fetch("http://localhost:8080/api/forms");
+        const forms = await res.json();
+
+        // ✅ Φίλτραρε μόνο τις ενεργές φόρμες
+        const activeForms = forms.filter(f => f.active === true || f.active === "true");
+
+        if (activeForms.length === 0) {
+          list.innerHTML = '<li class="list-group-item text-warning">⚠️ Δεν υπάρχουν ενεργές φόρμες προς συμπλήρωση.</li>';
+          return;
+        }
+
+        activeForms.forEach(form => {
+          const item = document.createElement("li");
+          item.className = "list-group-item d-flex justify-content-between align-items-center";
+
+          item.innerHTML = `
+            <span>${form.title}</span>
+            <a href="form-fill.html?id=${form.id}" class="btn btn-sm btn-primary">Συμπλήρωση</a>
+          `;
+
+          list.appendChild(item);
+        });
+      } catch (err) {
+        console.error("Σφάλμα:", err);
+        list.innerHTML = '<li class="list-group-item text-danger">❌ Σφάλμα σύνδεσης με τον διακομιστή</li>';
+      }
+    }
+
+    // Φόρτωση με το που ανοίξει η σελίδα
+    loadForms();
+  </script>
+</body>
+</html>

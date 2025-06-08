@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>BPMN Modeler</title>
+  <script src="https://unpkg.com/bpmn-js@11.5.0/dist/bpmn-modeler.development.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/bpmn-font/css/bpmn.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    #canvas {
+      height: 90vh;
+      border: 1px solid #ccc;
+    }
+    #buttons {
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas"></div>
+  <div id="buttons">
+    <button onclick="saveDiagram()">💾 Αποθήκευση BPMN</button>
+  </div>
+
+  <script>
+    const bpmnModeler = new BpmnJS({ container: '#canvas' });
+
+    // Προαιρετικά: αρχικό άδειο διάγραμμα
+    const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+      <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+        <bpmn:process id="Process_1" isExecutable="true">
+          <bpmn:startEvent id="StartEvent_1"/>
+        </bpmn:process>
+        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+          <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+            <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+              <dc:Bounds x="100" y="100" width="36" height="36"/>
+            </bpmndi:BPMNShape>
+          </bpmndi:BPMNPlane>
+        </bpmndi:BPMNDiagram>
+      </bpmn:definitions>`;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const diagramName = urlParams.get('name');
+
+    async function loadInitial() {
+      if (diagramName) {
+        const res = await fetch(`/api/bpmn/${diagramName}`);
+        if (res.ok) {
+          const data = await res.json();
+          return bpmnModeler.importXML(data.xml);
+        }
+      }
+      bpmnModeler.importXML(emptyDiagram);
+    }
+
+    loadInitial();
+
+    // Αποθήκευση
+    function saveDiagram() {
+      const name = diagramName || prompt('Αποθήκευση ως:');
+      if (!name) return;
+
+      bpmnModeler.saveXML({ format: true }, async function(err, xml) {
+        if (err) {
+          return console.error('❌ Σφάλμα εξαγωγής:', err);
+        }
+
+        const res = await fetch('/api/bpmn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, xml: xml })
+        });
+
+        if (res.ok) {
+          alert('✅ Αποθηκεύτηκε επιτυχώς!');
+        } else {
+          alert('❌ Αποτυχία αποθήκευσης');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

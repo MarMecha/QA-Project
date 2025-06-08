@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Διαχείριση Υπαλλήλων</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-4">👥 Διαχείριση Υπαλλήλων</h1>
+
+    <form id="employeeForm" class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label for="fullName" class="form-label">Ονοματεπώνυμο</label>
+        <input type="text" class="form-control" id="fullName" required>
+      </div>
+      <div class="col-md-6">
+        <label for="position" class="form-label">Θέση Εργασίας</label>
+        <input type="text" class="form-control" id="position" required>
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button type="submit" class="btn btn-success">➕ Προσθήκη</button>
+      </div>
+    </form>
+
+    <div id="formMsg" class="alert d-none"></div>
+
+    <h2 class="mt-5">📋 Υπάλληλοι</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Ονοματεπώνυμο</th>
+          <th>Θέση</th>
+          <th>Ενέργειες</th>
+        </tr>
+      </thead>
+      <tbody id="employeeTable"></tbody>
+    </table>
+
+    <a href="admin-dashboard.html" class="btn btn-secondary">⬅️ Πίσω στον Πίνακα Διαχείρισης</a>
+  </div>
+
+  <script>
+    async function fetchEmployees() {
+      const res = await fetch('/api/employees');
+      const employees = await res.json();
+      const table = document.getElementById('employeeTable');
+      table.innerHTML = '';
+      employees.forEach(emp => {
+        const row = `<tr>
+          <td>${emp.fullName ?? ''}</td>
+          <td>${emp.position ?? ''}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteEmployee(${emp.id})">🗑️ Διαγραφή</button></td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function deleteEmployee(id) {
+      if (!confirm('Σίγουρα θέλετε να διαγράψετε τον υπάλληλο;')) return;
+      await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+      fetchEmployees();
+    }
+
+    document.getElementById('employeeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('fullName').value;
+      const position = document.getElementById('position').value;
+      const msg = document.getElementById('formMsg');
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, position })
+      });
+      msg.classList.remove('d-none', 'alert-success', 'alert-danger');
+      msg.classList.add(res.ok ? 'alert-success' : 'alert-danger');
+      msg.textContent = res.ok ? '✅ Προστέθηκε ο υπάλληλος' : '❌ Σφάλμα προσθήκης';
+      if (res.ok) e.target.reset();
+      fetchEmployees();
+    });
+
+    window.addEventListener('DOMContentLoaded', fetchEmployees);
+  </script>
+</body>
+</html>

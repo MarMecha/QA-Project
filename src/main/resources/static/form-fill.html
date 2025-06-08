@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Συμπλήρωση Φόρμας</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .scale-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .scale-group label {
+      margin: 0 5px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h2 id="formTitle" class="mb-4">📋 Συμπλήρωση Φόρμας Αξιολόγησης</h2>
+
+    <form id="evaluationForm">
+      <div class="mb-3">
+        <label for="userId" class="form-label">Αναγνωριστικό Χρήστη</label>
+        <input type="text" id="userId" class="form-control" required />
+      </div>
+
+      <div id="questionList" class="mb-4">
+        <p>⏳ Φόρτωση...</p>
+      </div>
+
+      <button type="submit" class="btn btn-success">Υποβολή</button>
+    </form>
+  </div>
+
+  <script>
+    const formId = new URLSearchParams(window.location.search).get("id");
+    let loadedQuestions = [];
+
+    async function loadForm() {
+      const container = document.getElementById("questionList");
+      const title = document.getElementById("formTitle");
+
+      if (!formId) {
+        container.innerHTML = "<p class='text-danger'>❌ Δεν καθορίστηκε φόρμα (id).</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/forms/${formId}`);
+        if (!res.ok) throw new Error("Η φόρμα δεν βρέθηκε");
+
+        const form = await res.json();
+        container.innerHTML = "";
+        title.textContent = `📋 Συμπλήρωση Φόρμας #${form.id}`;
+        loadedQuestions = form.questions || [];
+
+        if (loadedQuestions.length === 0) {
+          container.innerHTML = "<p class='text-warning'>⚠️ Η φόρμα δεν περιέχει ερωτήσεις.</p>";
+          return;
+        }
+
+        loadedQuestions.forEach((question, index) => {
+          const group = document.createElement("div");
+          group.className = "mb-3";
+
+          group.innerHTML = `
+            <label class="form-label">${index + 1}. ${question}</label>
+            <div class="scale-group">
+              ${[1, 2, 3, 4, 5].map(val => `
+                <label for="q${index}_${val}">
+                  <input id="q${index}_${val}" type="radio" name="q${index}" value="${val}" required />
+                  ${val}
+                </label>
+              `).join("")}
+            </div>
+          `;
+
+          container.appendChild(group);
+        });
+      } catch (err) {
+        console.error("Σφάλμα:", err);
+        container.innerHTML = "<p class='text-danger'>❌ Δεν ήταν δυνατή η φόρτωση της φόρμας.</p>";
+      }
+    }
+
+    document.getElementById("evaluationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("userId").value.trim();
+      if (!userId) return alert("⚠️ Συμπλήρωσε το αναγνωριστικό σου.");
+
+      const inputs = document.querySelectorAll("input[type=radio]:checked");
+      const responses = [];
+
+      inputs.forEach((input, i) => {
+        const index = parseInt(input.name.replace("q", ""));
+        responses.push({
+          formId: parseInt(formId),
+          userId,
+          question: loadedQuestions[index],
+          score: parseInt(input.value)
+        });
+      });
+
+      if (responses.length !== loadedQuestions.length) {
+        alert("⚠️ Πρέπει να απαντήσεις σε όλες τις ερωτήσεις.");
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:8080/api/responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(responses)
+        });
+
+        if (res.status === 409) {
+          alert("❌ Έχεις ήδη αξιολογήσει αυτή τη φόρμα.");
+        } else if (res.ok) {
+          alert("✅ Η αξιολόγηση καταχωρήθηκε επιτυχώς!");
+          window.location.href = "student-feedback.html";
+        } else {
+          alert("❌ Σφάλμα κατά την υποβολή.");
+        }
+      } catch (err) {
+        console.error("Υποβολή αποτυγχάνει:", err);
+        alert("❌ Πρόβλημα σύνδεσης.");
+      }
+    });
+
+    loadForm();
+  </script>
+</body>
+</html>
