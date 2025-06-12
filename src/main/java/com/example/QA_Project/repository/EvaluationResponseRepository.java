@@ -15,4 +15,7 @@ public interface EvaluationResponseRepository extends JpaRepository<EvaluationRe
 
     @Query("SELECT r.question, AVG(r.score) FROM EvaluationResponse r WHERE r.formId = :formId GROUP BY r.question")
     List<Object[]> findAveragesByFormId(@Param("formId") Long formId);
+
+    @Query("SELECT AVG(r.score) FROM EvaluationResponse r WHERE r.formId = :formId AND r.question = :question")
+    Double findAverageByFormIdAndQuestion(@Param("formId") Long formId, @Param("question") String question);
 }
