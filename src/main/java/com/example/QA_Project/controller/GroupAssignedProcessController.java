@@ -6,6 +6,7 @@ import com.example.QA_Project.model.Employee;
 import com.example.QA_Project.repository.EmployeeGroupRepository;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import com.example.QA_Project.repository.BpmnDiagramRepository;
+import com.example.QA_Project.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,9 @@ public class GroupAssignedProcessController {
 
     @Autowired
     private BpmnDiagramRepository diagramRepo;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @PostMapping("/assign-group")
     public ResponseEntity<?> assignToGroup(
@@ -65,6 +69,8 @@ public class GroupAssignedProcessController {
         process.setMembers(members);
 
         groupAssignedRepo.save(process);
+
+        notificationService.notifyAssignmentToGroup(process);
 
         return ResponseEntity.ok(process);
     }
