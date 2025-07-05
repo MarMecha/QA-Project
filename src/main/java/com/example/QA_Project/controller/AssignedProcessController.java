@@ -5,6 +5,7 @@ import com.example.QA_Project.model.Employee;
 import com.example.QA_Project.repository.AssignedProcessRepository;
 import com.example.QA_Project.repository.EmployeeRepository;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
+import com.example.QA_Project.service.NotificationService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -31,6 +32,9 @@ public class AssignedProcessController {
 
     @Autowired
     private GroupAssignedProcessRepository groupAssignedRepo;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @PostMapping("/assign")
     public ResponseEntity<?> assignProcess(
@@ -62,6 +66,8 @@ public class AssignedProcessController {
         process.setPosition(employee.getPosition());
 
         assignedRepo.save(process);
+
+        notificationService.notifyAssignmentToIndividual(process);
 
         return ResponseEntity.ok(process);
     }

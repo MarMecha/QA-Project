@@ -1,0 +1,40 @@
+.white-icon {
+  filter: brightness(0) invert(1);
+}
+
+
+.custom-sidebar {
+  background: linear-gradient(135deg, #4caf50 0%, #81d4fa 100%);
+  color: white;
+}
+
+.btn-sidebar {
+  font-weight: 300;         /* Πιο λεπτή γραμματοσειρά */
+  font-size: 1rem;          /* Προσαρμόσιμο μέγεθος */
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  text-decoration: none;
+  width: 100%;
+  border: none;
+  background-color: transparent;
+}
+
+.btn-sidebar:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.offcanvas-title {
+  color: white;
+}
+
+.btn-close-white {
+  filter: invert(1);
+}
+
+.btn-sidebar img {
+    width: 20px;
+    filter: brightness(0) invert(1);
+    margin-right: 12px;
+}

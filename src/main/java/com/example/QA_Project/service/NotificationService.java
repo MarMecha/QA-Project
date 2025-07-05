@@ -1,6 +1,7 @@
 package com.example.QA_Project.service;
 
 import com.example.QA_Project.model.GroupAssignedProcess;
+import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.ProcessChatMessage;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,19 @@ public class NotificationService {
                     System.out.println("📢 Ειδοποίηση στον " + member);
                 }
             }
+        }
+    }
+
+    public void notifyAssignmentToIndividual(AssignedProcess process) {
+        System.out.println("📌 notifyAssignmentToIndividual ΚΛΗΘΗΚΕ για process: " + process.getProcessName());
+        System.out.println("📢 Ειδοποίηση νέας ανάθεσης στον " + process.getFullName());
+    }
+
+    public void notifyAssignmentToGroup(GroupAssignedProcess process) {
+        System.out.println("📌 notifyAssignmentToGroup ΚΛΗΘΗΚΕ για process: " + process.getProcessName());
+        String[] membersArray = process.getMembers().split(",\\s*");
+        for (String member : membersArray) {
+            System.out.println("📢 Ειδοποίηση νέας ανάθεσης στον " + member);
         }
     }
 

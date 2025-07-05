@@ -4,146 +4,212 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Πίνακας Διαδικασιών QA</title>
+  <link rel="icon" type="image/png" href="/icons/development_cognitive_progress_improvement_growth_icon.png" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/Admin_dashboard.css" />
 </head>
 <body class="bg-light">
-  <div class="container py-4">
-    <h1 class="mb-4">🧩 Δημιουργία Διαδικασίας QA</h1>
+  <nav class="navbar custom-sidebar px-3 d-flex align-items-center">
+    <div class="d-flex align-items-center">
+      <span class="navbar-brand mb-0 h1 text-white me-4">
+        <img src="/icons/development_cognitive_progress_improvement_growth_icon.png" alt="QA Icon" width="30" height="30" class="me-2 white-icon" />
+        QAssurance
+      </span>
 
-    <form id="startForm" class="row g-3 mb-4">
-      <div class="d-flex gap-2">
-        <a href="assign-qa-process.html" class="btn btn-primary">
-          ➕ Ανάθεση QA Διαδικασίας
-        </a>
-        <a href="modeler.html" class="btn btn-outline-primary">
-          📐 Νέο Σχεδιάγραμμα
-        </a>
-        <a href="employee-management.html" class="btn btn-outline-secondary">
-          👥 Διαχείριση Υπαλλήλων
-        </a>
-        <a href="group-management.html" class="btn btn-outline-secondary">
-          👫 Διαχείριση Groups
-        </a>
-        <a href="qa-process-management.html" class="btn btn-outline-secondary">
-          🛠️ Διαχείριση QA Διαδικασιών
-        </a>
-        <a href="quality-dashboard.html" class="btn btn-outline-secondary">
-          🎯 Διαχείριση Ποιοτικών Στόχων
-        </a>
+      <div class="d-flex">
+        <button class="btn btn-sidebar me-2" onclick="showTab('diagrams')">Διαγράμματα</button>
+        <button class="btn btn-sidebar" onclick="showTab('forms')">Ερωτηματολόγια</button>
       </div>
+    </div>
+  </nav>
 
-    </form>
 
-    <div id="result" class="alert d-none"></div>
+  <button class="btn mb-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" style="margin: 12px 0 0 16px;">
+    <img src="icons/hamburger.png" alt="Menu" width="30" height="30" />
+  </button>
 
-    <h2 class="mt-5">📂 Αποθηκευμένα BPMN Διαγράμματα</h2>
-    <table class="table table-bordered mb-4">
-      <thead>
-        <tr>
-          <th>Όνομα</th>
-          <th>Κατάσταση</th>
-        </tr>
-      </thead>
-      <tbody id="diagramList"></tbody>
-    </table>
+  <div class="container py-4">
+    <!-- Sidebar Menu -->
+    <div class="offcanvas offcanvas-start text-white custom-sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="sidebarMenuLabel">🚀 Μενού Πλοήγησης</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Κλείσιμο"></button>
+      </div>
+      <div class="offcanvas-body ps-3 pe-3">
+        <div class="d-flex flex-column gap-3 align-items-start">
+          <a href="assign-qa-process.html" class="btn btn-sidebar">
+            <img src="/icons/plus_round_icon.png" alt="plus" width="20" class="me-2"/> Ανάθεση QA Διαδικασίας
+          </a>
+          <a href="modeler.html" class="btn btn-sidebar">
+            <img src="/icons/database_diagram_chart_information_data_icon.png" alt="plus" width="20" class="me-2"/> Νέο Σχεδιάγραμμα
+          </a>
+          <a href="employee-management.html" class="btn btn-sidebar">
+            <img src="/icons/account_user_avatar_profile_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Υπαλλήλων
+          </a>
+          <a href="group-management.html" class="btn btn-sidebar">
+            <img src="/icons/group_people_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Groups
+          </a>
+          <a href="qa-process-management.html" class="btn btn-sidebar">
+            <img src="/icons/settings_setting_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση QA Διαδικασιών
+          </a>
+          <a href="quality-dashboard.html" class="btn btn-sidebar">
+            <img src="/icons/target_arrow_filled_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Ποιοτικών Στόχων
+          </a>
+        </div>
+      </div>
+    </div>
 
-    <h2 class="mt-5">📋 Ανατεθειμένες Διαδικασίες (Ατομικές)</h2>
-    <table class="table table-bordered" id="assignedTableWrapper">
-      <thead>
-        <tr>
-          <th>Διαδικασία</th>
-          <th>Υπάλληλος</th>
-          <th>Θέση</th>
-          <th>Ημ/νία Ανάθεσης</th>
-          <th>Διάγραμμα</th>
-        </tr>
-      </thead>
-      <tbody id="assignedTable"></tbody>
-    </table>
+    <!-- Tabs -->
+    <div id="tab-diagrams">
+      <h2 class="mt-5">📂 Αποθηκευμένα BPMN Διαγράμματα</h2>
+      <table class="table table-bordered mb-4">
+        <thead>
+          <tr><th>Όνομα</th><th>Κατάσταση</th></tr>
+        </thead>
+        <tbody id="diagramList"></tbody>
+      </table>
+    </div>
 
-    <h2 class="mt-5">📋 Ανατεθειμένες Διαδικασίες σε Groups</h2>
-    <table class="table table-bordered" id="assignedGroupWrapper">
-      <thead>
-        <tr>
-          <th>Διαδικασία</th>
-          <th>Group</th>
-          <th>Μέλη</th>
-          <th>Ημ/νία Ανάθεσης</th>
-          <th>Διάγραμμα</th>
-        </tr>
-      </thead>
-      <tbody id="assignedGroupTable"></tbody>
-    </table>
+    <div id="tab-forms" class="d-none">
+      <h2 class="mb-4">Δημιουργία Φόρμας Αξιολόγησης</h2>
+      <form id="formBuilder">
+        <div class="mb-3">
+          <label for="formTitleInput" class="form-label">Τίτλος Φόρμας</label>
+          <input type="text" id="formTitleInput" class="form-control" required />
+        </div>
+        <div id="questionList"></div>
+        <div class="d-flex justify-content-between mt-4">
+          <button type="button" class="btn btn-outline-primary" onclick="addQuestion()">➕ Πρόσθηκη Ερώτησης</button>
+          <button type="submit" class="btn btn-success">Αποθήκευση Φόρμας</button>
+        </div>
+      </form>
+      <hr class="my-5">
+      <h2 class="mb-3">📄 Αποθηκευμένες Φόρμες</h2>
+      <ul class="list-group" id="savedFormsList"></ul>
 
-    <h2 class="mt-5">📊 Αποτελέσματα Αξιολόγησης Ενεργών Φορμών</h2>
-    <div id="activeForms" class="accordion mt-3"></div>
+      <h2 class="mt-5">📊 Αποτελέσματα Αξιολόγησης Ενεργών Φορμών</h2>
+      <div id="activeForms" class="accordion mt-3"></div>
+    </div>
   </div>
 
-  <!-- JS Scripts -->
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const form = document.getElementById('startForm');
-    const result = document.getElementById('result');
+    function showTab(tab) {
+      document.getElementById('tab-diagrams').classList.toggle('d-none', tab !== 'diagrams');
+      document.getElementById('tab-forms').classList.toggle('d-none', tab !== 'forms');
+    }
 
-    // form.addEventListener('submit', async (e) => {
-    //   e.preventDefault();
+    const BASE_URL = 'http://localhost:8080/api/forms';
+    let questionCounter = 0;
+    let editingFormId = null;
 
-    //   const processName = document.getElementById('processName').value;
-    //   const userFullName = document.getElementById('userFullName').value;
-    //   const userId = document.getElementById('userId').value;
-    //   const bpmnFile = document.getElementById('bpmnFile').files[0];
+    function addQuestion(text = '') {
+      const container = document.getElementById('questionList');
+      const div = document.createElement('div');
+      div.className = 'mb-4';
+      div.id = `question_${questionCounter}`;
+      div.innerHTML = `
+        <label class="form-label">Ερώτηση #${questionCounter + 1}</label>
+        <input type="text" class="form-control mb-2" name="question_${questionCounter}" value="${text}" required>
+        <div class="mb-2">
+          <small>Δείγμα: 1 – 5</small>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion('${div.id}')">❌ Αφαίρεση</button>
+      `;
+      container.appendChild(div);
+      questionCounter++;
+    }
 
-    //   const formData = new FormData();
-    //   formData.append("processName", processName);
-    //   formData.append("userFullName", userFullName);
-    //   formData.append("userId", userId);
-    //   if (bpmnFile) formData.append("bpmnFile", bpmnFile);
+    function removeQuestion(id) {
+      const element = document.getElementById(id);
+      if (element) element.remove();
+    }
 
-    //   const response = await fetch('/api/instances/start', {
-    //     method: 'POST',
-    //     body: formData
-    //   });
+    document.getElementById('formBuilder').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('formTitleInput').value.trim();
+      if (!title) return alert("❗ Η φόρμα πρέπει να έχει τίτλο.");
+      const questions = Array.from(document.querySelectorAll('#questionList input[type="text"]')).map(input => input.value.trim()).filter(text => text.length > 0);
+      if (questions.length === 0) return alert("❗ Πρέπει να εισαχθεί τουλάχιστον μία ερώτηση.");
+      const url = editingFormId ? `${BASE_URL}/${editingFormId}` : BASE_URL;
+      const method = editingFormId ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, questions, active: false })
+      });
+      if (response.ok) {
+        alert('✅ Η Φόρμα αποθηκεύθηκε επιτυχώς!');
+        editingFormId = null;
+        questionCounter = 0;
+        document.getElementById('formBuilder').reset();
+        document.getElementById('questionList').innerHTML = '';
+        addQuestion();
+        loadSavedForms();
+      } else {
+        alert('❌ Σφάλμα κατά την αποθήκευση.');
+      }
+    });
 
-    //   const data = await response.json();
+    function openEditForm(form) {
+      const container = document.getElementById('questionList');
+      document.getElementById('formTitleInput').value = form.title || '';
+      container.innerHTML = '';
+      questionCounter = 0;
+      editingFormId = form.id;
+      form.questions.forEach(q => addQuestion(q));
+    }
 
-    //   result.classList.remove('d-none', 'alert-success', 'alert-danger');
-    //   result.classList.add(response.ok ? 'alert-success' : 'alert-danger');
-    //   result.textContent = response.ok
-    //     ? `✅ Νέα εκτέλεση ID: ${data.id} για χρήστη ${data.userId}`
-    //     : `❌ Σφάλμα: ${data.message || 'Απέτυχε η εκκίνηση'}`;
+    async function toggleActivation(id) {
+      const res = await fetch(`${BASE_URL}/${id}/toggle`, { method: 'PUT' });
+      if (res.ok) loadSavedForms();
+      else alert("Αποτυχία ενεργοποίησης/απενεργοποίησης");
+    }
 
-    //   fetchInstances();
-    // });
+    async function deleteForm(id) {
+      if (!confirm("Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτή τη φόρμα;")) return;
+      const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+      if (res.ok) loadSavedForms();
+      else alert("Αποτυχία διαγραφής");
+    }
 
-    // async function fetchInstances() {
-    //   const userId = document.getElementById('userId').value;
-    //   if (!userId) return;
-
-    //   try {
-    //     const response = await fetch(`/api/instances/user/${userId}`);
-    //     const instances = await response.json();
-    //     const table = document.getElementById('instanceTable');
-    //     table.innerHTML = '';
-
-    //     if (!Array.isArray(instances)) {
-    //       table.innerHTML = '<tr><td colspan="4">❌ Σφάλμα στη λήψη δεδομένων</td></tr>';
-    //       return;
-    //     }
-
-    //     instances.forEach(inst => {
-    //       const row = `
-    //         <tr>
-    //           <td>${inst.id ?? '–'}</td>
-    //           <td>${inst.processName ?? '–'}</td>
-    //           <td>${inst.status ?? '–'}</td>
-    //           <td>${inst.startedAt ?? '–'}</td>
-    //         </tr>`;
-    //       table.innerHTML += row;
-    //     });
-    //   } catch (err) {
-    //     console.error('Error loading instances:', err);
-    //   }
-    // }
+    async function loadSavedForms() {
+      const res = await fetch(BASE_URL);
+      if (!res.ok) return;
+      const forms = await res.json();
+      const list = document.getElementById('savedFormsList');
+      list.innerHTML = '';
+      if (!Array.isArray(forms) || forms.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν αποθηκευμένες φόρμες.</li>';
+        return;
+      }
+      forms.forEach(form => {
+        const item = document.createElement('li');
+        item.className = 'list-group-item';
+        const header = document.createElement('div');
+        header.className = 'd-flex justify-content-between align-items-center';
+        const label = document.createElement('span');
+        label.textContent = `📄 ${form.title || 'Χωρίς τίτλο'}`;
+        label.style.cursor = 'pointer';
+        label.onclick = () => openEditForm(form);
+        const buttons = document.createElement('div');
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn btn-sm me-2 ' + (form.active ? 'btn-success' : 'btn-secondary');
+        toggleBtn.textContent = form.active ? 'Ενεργή' : 'Ανενεργή';
+        toggleBtn.onclick = () => toggleActivation(form.id);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        deleteBtn.textContent = 'Διαγραφή';
+        deleteBtn.onclick = () => deleteForm(form.id);
+        buttons.appendChild(toggleBtn);
+        buttons.appendChild(deleteBtn);
+        header.appendChild(label);
+        header.appendChild(buttons);
+        item.appendChild(header);
+        list.appendChild(item);
+      });
+    }
 
     async function loadDiagrams() {
       const list = document.getElementById('diagramList');
@@ -162,74 +228,25 @@
       });
     }
 
-    async function loadAssignedProcesses() {
-      const table = document.getElementById('assignedTable');
-      table.innerHTML = '';
-      const res = await fetch('/api/qa/all');
-      const processes = await res.json();
-      if (!Array.isArray(processes) || processes.length === 0) {
-        table.innerHTML = '<tr><td colspan="5" class="text-muted">Δεν υπάρχουν αναθέσεις.</td></tr>';
-        return;
-      }
-      processes.forEach(p => {
-        const link = p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–';
-        const row = `<tr>
-            <td>${p.processName || '–'}</td>
-            <td>${p.fullName || '–'}</td>
-            <td>${p.position || '–'}</td>
-            <td>${p.assignedAt ? p.assignedAt.replace('T',' ').substring(0,16) : '–'}</td>
-            <td>${link}</td>
-          </tr>`;
-        table.innerHTML += row;
-      });
-    }
-    
-    async function loadGroupAssignedProcesses() {
-      const table = document.getElementById('assignedGroupTable');
-      table.innerHTML = '';
-      const res = await fetch('/api/qa/group-all');
-      const processes = await res.json();
-      if (!Array.isArray(processes) || processes.length === 0) {
-        table.innerHTML = '<tr><td colspan="5" class="text-muted">Δεν υπάρχουν αναθέσεις.</td></tr>';
-        return;
-      }
-      processes.forEach(p => {
-        const link = p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–';
-        const row = `<tr>
-            <td>${p.processName || '–'}</td>
-            <td>${p.groupName || '–'}</td>
-            <td>${p.members || '–'}</td>
-            <td>${p.assignedAt ? p.assignedAt.replace('T',' ').substring(0,16) : '–'}</td>
-            <td>${link}</td>
-          </tr>`;
-        table.innerHTML += row;
-      });
-    }
-
     async function loadActiveFormsWithAverages() {
       const container = document.getElementById("activeForms");
       container.innerHTML = "";
-
       const res = await fetch('/api/forms');
       const forms = await res.json();
       const activeForms = forms.filter(f => f.active === true || f.active === "true");
-
       if (activeForms.length === 0) {
         container.innerHTML = '<div class="text-muted">Δεν υπάρχουν ενεργές φόρμες.</div>';
         return;
       }
-
       for (const form of activeForms) {
         const avgRes = await fetch(`/api/responses/averages/${form.id}`);
         const averages = await avgRes.json();
-
         const questionsHtml = Object.entries(averages).map(([question, avg]) => `
           <li class="list-group-item d-flex justify-content-between align-items-center">
             ${question}
             <span class="badge bg-primary rounded-pill">${avg}</span>
           </li>
         `).join('');
-
         container.innerHTML += `
           <div class="accordion-item">
             <h2 class="accordion-header" id="heading${form.id}">
@@ -250,11 +267,10 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // fetchInstances();
-      loadActiveFormsWithAverages();
+      addQuestion();
       loadDiagrams();
-      loadAssignedProcesses();
-      loadGroupAssignedProcesses();
+      loadSavedForms();
+      loadActiveFormsWithAverages();
     });
   </script>
 </body>
