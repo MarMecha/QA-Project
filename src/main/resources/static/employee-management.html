@@ -15,9 +15,17 @@
         <label for="fullName" class="form-label">Ονοματεπώνυμο</label>
         <input type="text" class="form-control" id="fullName" required>
       </div>
-      <div class="col-md-6">
+       <div class="col-md-6">
         <label for="position" class="form-label">Θέση Εργασίας</label>
         <input type="text" class="form-control" id="position" required>
+      </div>
+      <div class="col-md-6">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" required>
+      </div>
+      <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" required>
       </div>
       <div class="col-12 d-flex justify-content-end">
         <button type="submit" class="btn btn-success">➕ Προσθήκη</button>
@@ -32,6 +40,7 @@
         <tr>
           <th>Ονοματεπώνυμο</th>
           <th>Θέση</th>
+          <th>Username</th>
           <th>Ενέργειες</th>
         </tr>
       </thead>
@@ -51,6 +60,7 @@
         const row = `<tr>
           <td>${emp.fullName ?? ''}</td>
           <td>${emp.position ?? ''}</td>
+          <td>${emp.username ?? ''}</td>
           <td><button class="btn btn-sm btn-danger" onclick="deleteEmployee(${emp.id})">🗑️ Διαγραφή</button></td>
         </tr>`;
         table.innerHTML += row;
@@ -67,11 +77,13 @@
       e.preventDefault();
       const fullName = document.getElementById('fullName').value;
       const position = document.getElementById('position').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
       const msg = document.getElementById('formMsg');
       const res = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, position })
+        body: JSON.stringify({ fullName, position, username, password })
       });
       msg.classList.remove('d-none', 'alert-success', 'alert-danger');
       msg.classList.add(res.ok ? 'alert-success' : 'alert-danger');

@@ -29,7 +29,7 @@ public class GroupAssignedProcessController {
 
     @PostMapping("/assign-group")
     public ResponseEntity<?> assignToGroup(
-            @RequestParam String processName,
+            @RequestParam String processName, // μπορείς να το κρατήσεις για εμφάνιση, όχι για process logic
             @RequestParam Long groupId,
             @RequestParam String description,
             @RequestParam(required = false) String diagramName,
@@ -45,15 +45,20 @@ public class GroupAssignedProcessController {
         }
 
         GroupAssignedProcess process = new GroupAssignedProcess();
-        process.setProcessName(processName);
-        process.setDescription(description);
+
+        // 🔁 Χρήση BPMN διαγράμματος ως process name (για να δένει με chat & notifications)
         if (diagramName != null && !diagramName.isBlank()) {
+            process.setProcessName(diagramName);
             process.setBpmnFileName(diagramName);
-        } else if (file != null) {
+        } else {
+            process.setProcessName(file.getOriginalFilename());
             process.setBpmnFileName(file.getOriginalFilename());
         }
+
+        process.setDescription(description);
         process.setAssignedAt(LocalDateTime.now());
         process.setGroupName(group.getName());
+
         String members = group.getMembers().stream()
                 .map(Employee::getFullName)
                 .collect(Collectors.joining(", "));
@@ -63,6 +68,7 @@ public class GroupAssignedProcessController {
 
         return ResponseEntity.ok(process);
     }
+
 
     @GetMapping("/group-all")
     public java.util.List<GroupAssignedProcess> getAllGroupProcesses() {

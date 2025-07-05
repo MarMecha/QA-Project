@@ -3,7 +3,6 @@ package com.example.QA_Project.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 
 @Entity
 public class BpmnDiagram {
@@ -11,9 +10,11 @@ public class BpmnDiagram {
     @Id
     private String name;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String xml;
+
+    @Column(nullable = false)
+    private boolean published = false;
 
     public String getName() {
         return name;
@@ -29,5 +30,13 @@ public class BpmnDiagram {
 
     public void setXml(String xml) {
         this.xml = xml;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 }

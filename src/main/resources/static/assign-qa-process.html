@@ -89,7 +89,7 @@
     let activeTab = 'employee';
 
     async function loadDiagrams() {
-      const res = await fetch('/api/bpmn');
+      const res = await fetch('/api/bpmn?published=true');
       const diagrams = await res.json();
       const select = document.getElementById('diagramSelect');
       select.innerHTML = '<option value="">-- Επιλογή --</option>';

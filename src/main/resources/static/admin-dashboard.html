@@ -37,7 +37,15 @@
     <div id="result" class="alert d-none"></div>
 
     <h2 class="mt-5">📂 Αποθηκευμένα BPMN Διαγράμματα</h2>
-    <ul id="diagramList" class="list-group mb-4"></ul>
+    <table class="table table-bordered mb-4">
+      <thead>
+        <tr>
+          <th>Όνομα</th>
+          <th>Κατάσταση</th>
+        </tr>
+      </thead>
+      <tbody id="diagramList"></tbody>
+    </table>
 
     <h2 class="mt-5">📋 Ανατεθειμένες Διαδικασίες (Ατομικές)</h2>
     <table class="table table-bordered" id="assignedTableWrapper">
@@ -77,65 +85,65 @@
     const form = document.getElementById('startForm');
     const result = document.getElementById('result');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // form.addEventListener('submit', async (e) => {
+    //   e.preventDefault();
 
-      const processName = document.getElementById('processName').value;
-      const userFullName = document.getElementById('userFullName').value;
-      const userId = document.getElementById('userId').value;
-      const bpmnFile = document.getElementById('bpmnFile').files[0];
+    //   const processName = document.getElementById('processName').value;
+    //   const userFullName = document.getElementById('userFullName').value;
+    //   const userId = document.getElementById('userId').value;
+    //   const bpmnFile = document.getElementById('bpmnFile').files[0];
 
-      const formData = new FormData();
-      formData.append("processName", processName);
-      formData.append("userFullName", userFullName);
-      formData.append("userId", userId);
-      if (bpmnFile) formData.append("bpmnFile", bpmnFile);
+    //   const formData = new FormData();
+    //   formData.append("processName", processName);
+    //   formData.append("userFullName", userFullName);
+    //   formData.append("userId", userId);
+    //   if (bpmnFile) formData.append("bpmnFile", bpmnFile);
 
-      const response = await fetch('/api/instances/start', {
-        method: 'POST',
-        body: formData
-      });
+    //   const response = await fetch('/api/instances/start', {
+    //     method: 'POST',
+    //     body: formData
+    //   });
 
-      const data = await response.json();
+    //   const data = await response.json();
 
-      result.classList.remove('d-none', 'alert-success', 'alert-danger');
-      result.classList.add(response.ok ? 'alert-success' : 'alert-danger');
-      result.textContent = response.ok
-        ? `✅ Νέα εκτέλεση ID: ${data.id} για χρήστη ${data.userId}`
-        : `❌ Σφάλμα: ${data.message || 'Απέτυχε η εκκίνηση'}`;
+    //   result.classList.remove('d-none', 'alert-success', 'alert-danger');
+    //   result.classList.add(response.ok ? 'alert-success' : 'alert-danger');
+    //   result.textContent = response.ok
+    //     ? `✅ Νέα εκτέλεση ID: ${data.id} για χρήστη ${data.userId}`
+    //     : `❌ Σφάλμα: ${data.message || 'Απέτυχε η εκκίνηση'}`;
 
-      fetchInstances();
-    });
+    //   fetchInstances();
+    // });
 
-    async function fetchInstances() {
-      const userId = document.getElementById('userId').value;
-      if (!userId) return;
+    // async function fetchInstances() {
+    //   const userId = document.getElementById('userId').value;
+    //   if (!userId) return;
 
-      try {
-        const response = await fetch(`/api/instances/user/${userId}`);
-        const instances = await response.json();
-        const table = document.getElementById('instanceTable');
-        table.innerHTML = '';
+    //   try {
+    //     const response = await fetch(`/api/instances/user/${userId}`);
+    //     const instances = await response.json();
+    //     const table = document.getElementById('instanceTable');
+    //     table.innerHTML = '';
 
-        if (!Array.isArray(instances)) {
-          table.innerHTML = '<tr><td colspan="4">❌ Σφάλμα στη λήψη δεδομένων</td></tr>';
-          return;
-        }
+    //     if (!Array.isArray(instances)) {
+    //       table.innerHTML = '<tr><td colspan="4">❌ Σφάλμα στη λήψη δεδομένων</td></tr>';
+    //       return;
+    //     }
 
-        instances.forEach(inst => {
-          const row = `
-            <tr>
-              <td>${inst.id ?? '–'}</td>
-              <td>${inst.processName ?? '–'}</td>
-              <td>${inst.status ?? '–'}</td>
-              <td>${inst.startedAt ?? '–'}</td>
-            </tr>`;
-          table.innerHTML += row;
-        });
-      } catch (err) {
-        console.error('Error loading instances:', err);
-      }
-    }
+    //     instances.forEach(inst => {
+    //       const row = `
+    //         <tr>
+    //           <td>${inst.id ?? '–'}</td>
+    //           <td>${inst.processName ?? '–'}</td>
+    //           <td>${inst.status ?? '–'}</td>
+    //           <td>${inst.startedAt ?? '–'}</td>
+    //         </tr>`;
+    //       table.innerHTML += row;
+    //     });
+    //   } catch (err) {
+    //     console.error('Error loading instances:', err);
+    //   }
+    // }
 
     async function loadDiagrams() {
       const list = document.getElementById('diagramList');
@@ -143,14 +151,14 @@
       const res = await fetch('/api/bpmn');
       const diagrams = await res.json();
       if (diagrams.length === 0) {
-        list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν διαγράμματα.</li>';
+        list.innerHTML = '<tr><td colspan="2" class="text-muted">Δεν υπάρχουν διαγράμματα.</td></tr>';
         return;
       }
       diagrams.forEach(d => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item';
-        li.innerHTML = `<a href="modeler.html?name=${encodeURIComponent(d.name)}">${d.name}</a>`;
-        list.appendChild(li);
+        const row = document.createElement('tr');
+        const status = d.published ? '✅' : '—';
+        row.innerHTML = `<td><a href="modeler.html?name=${encodeURIComponent(d.name)}">${d.name}</a></td><td>${status}</td>`;
+        list.appendChild(row);
       });
     }
 
@@ -242,7 +250,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      fetchInstances();
+      // fetchInstances();
       loadActiveFormsWithAverages();
       loadDiagrams();
       loadAssignedProcesses();

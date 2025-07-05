@@ -40,6 +40,8 @@ public class EmployeeController {
         return employeeRepo.findById(id).map(emp -> {
             emp.setFullName(updated.getFullName());
             emp.setPosition(updated.getPosition());
+            emp.setUsername(updated.getUsername());
+            emp.setPassword(updated.getPassword());
             return employeeRepo.save(emp);
         }).orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
     }

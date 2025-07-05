@@ -4,6 +4,7 @@ import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.Employee;
 import com.example.QA_Project.repository.AssignedProcessRepository;
 import com.example.QA_Project.repository.EmployeeRepository;
+import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -27,6 +28,9 @@ public class AssignedProcessController {
 
     @Autowired
     private BpmnDiagramRepository diagramRepo;
+
+    @Autowired
+    private GroupAssignedProcessRepository groupAssignedRepo;
 
     @PostMapping("/assign")
     public ResponseEntity<?> assignProcess(
@@ -65,6 +69,19 @@ public class AssignedProcessController {
     @GetMapping("/all")
     public List<AssignedProcess> getAllProcesses() {
         return assignedRepo.findAll();
+    }
+
+    // Return individual and group QA processes for a specific employee
+    @GetMapping("/employee/{id}")
+    public ResponseEntity<?> getProcessesForEmployee(@PathVariable Long id) {
+        return employeeRepo.findById(id).map(emp -> {
+            var assigned = assignedRepo.findByFullName(emp.getFullName());
+            var group = groupAssignedRepo.findByMembersContaining(emp.getFullName());
+            java.util.Map<String, java.util.List<?>> res = new java.util.HashMap<>();
+            res.put("assigned", assigned);
+            res.put("group", group);
+            return ResponseEntity.ok(res);
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
       @PutMapping("/{id}")

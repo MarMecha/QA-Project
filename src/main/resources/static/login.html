@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-4">🔐 Είσοδος Χρήστη</h1>
+    <form id="loginForm" class="row g-3">
+      <div class="col-md-6">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" required>
+      </div>
+      <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary">Είσοδος</button>
+      </div>
+    </form>
+    <div id="loginMsg" class="alert mt-3 d-none"></div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('loginMsg');
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('employeeId', data.id);
+        localStorage.setItem('employeeName', data.fullName);
+        localStorage.setItem('employeePosition', data.position ?? '');
+        const redirect = data.position && data.position.toLowerCase().includes('qa')
+          ? 'admin-dashboard.html'
+          : 'employee-dashboard.html';
+        window.location.href = redirect;
+      } else {
+        msg.classList.remove('d-none', 'alert-success');
+        msg.classList.add('alert-danger');
+        msg.textContent = '❌ Λάθος στοιχεία';
+      }
+    });
+  </script>
+</body>
+</html>

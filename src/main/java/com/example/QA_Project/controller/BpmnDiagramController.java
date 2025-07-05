@@ -26,7 +26,12 @@ public class BpmnDiagramController {
     }
 
     @GetMapping
-    public List<BpmnDiagram> listDiagrams() {
+    public List<BpmnDiagram> listDiagrams(@RequestParam(required = false) Boolean published) {
+        System.out.println("Param published = " + published);
+
+        if (published != null) {
+            return repository.findByPublished(published);
+        }
         return repository.findAll();
     }
 
@@ -35,5 +40,17 @@ public class BpmnDiagramController {
         Optional<BpmnDiagram> diagram = repository.findById(name);
         return diagram.map(ResponseEntity::ok)
                       .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{name}/toggle")
+    public ResponseEntity<BpmnDiagram> togglePublish(@PathVariable String name) {
+        Optional<BpmnDiagram> diagram = repository.findById(name);
+        if (diagram.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        BpmnDiagram d = diagram.get();
+        d.setPublished(!d.isPublished());
+        repository.save(d);
+        return ResponseEntity.ok(d);
     }
 }
