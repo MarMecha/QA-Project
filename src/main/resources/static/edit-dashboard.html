@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QAssurance</title>
+  <link rel="icon" type="image/png" href="/icons/development_cognitive_progress_improvement_growth_icon.png" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/Admin_dashboard.css" />
+  <!-- BPMN Styles -->
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/bpmn-font/css/bpmn.css" />
+
+  <!-- BPMN JS -->
+  <script src="https://unpkg.com/bpmn-js@11.5.0/dist/bpmn-modeler.development.js"></script>
+
+</head>
+<body class="bg-light">
+  <nav class="navbar custom-sidebar px-3 d-flex align-items-center">
+    <div class="d-flex align-items-center">
+      <span class="navbar-brand mb-0 h1 text-white me-4">
+        <img src="/icons/development_cognitive_progress_improvement_growth_icon.png" alt="QA Icon" width="30" height="30" class="me-2 white-icon" />
+        QAssurance
+      </span>
+      <!-- Tabs -->
+      <div class="d-flex justify-content-center">
+        <a href="admin-dashboard.html" class="btn btn-sidebar" >
+          Home
+        </a>
+        <button class="btn btn-sidebar" onclick="showTab('assign')">
+          Ανάθεση QA Διαδικασίας
+        </button>
+        <button class="btn btn-sidebar" onclick="showTab('modeler')">
+          Νέο Σχεδιάγραμμα
+        </button>
+        <button class="btn btn-sidebar" onclick="showTab('employees')">
+          Διαχείριση Υπαλλήλων
+        </button>
+        <button class="btn btn-sidebar" onclick="showTab('groups')">
+          Διαχείριση Ομάδων
+        </button>
+        <button class="btn btn-sidebar" onclick="showTab('qa')">
+          Διαχείριση QA Διαδικασιών
+        </button>
+        <button class="btn btn-sidebar" onclick="showTab('quality')">
+          Διαχείριση Ποιοτικών Στόχων
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Περιεχόμενο Κεντρικό -->
+  <div class="container py-4">
+    <!-- Ανάθεση -->
+    <div id="tab-assign" class="d-none">
+      <div class="container py-4">
+        <h2 class="mb-4">📤 Ανάθεση Νέας QA Διαδικασίας</h2>
+        <div class="mb-3">
+          <button type="button" id="tabEmployee" class="btn btn-primary me-2">Υπάλληλος</button>
+          <button type="button" id="tabGroup" class="btn btn-outline-primary">Group</button>
+        </div>
+
+        <form id="assignmentForm" class="row g-3 position-relative">
+          <div class="col-md-6">
+            <label for="processName" class="form-label">Ονομασία Διαδικασίας</label>
+            <input type="text" class="form-control" id="processName" required>
+          </div>
+
+          <div id="employeeFields" class="row g-3">
+            <div class="col-md-6 position-relative">
+              <label for="employeeName" class="form-label">Ονοματεπώνυμο Υπαλλήλου</label>
+              <input type="text" class="form-control" id="employeeName" autocomplete="off" required>
+              <ul id="employeeSuggestions" class="list-group d-none" style="position:absolute; z-index:1000; width:100%; background:#fff; border:1px solid #ccc;"></ul>
+            </div>
+            <div class="col-md-6">
+              <label for="employeePosition" class="form-label">Θέση Εργασίας</label>
+              <input type="text" class="form-control" id="employeePosition" readonly>
+            </div>
+          </div>
+
+          <div id="groupFields" class="row g-3 d-none">
+            <div class="col-md-6">
+              <label for="groupSelect" class="form-label">Όνομα Group Υπαλλήλων</label>
+              <select id="groupSelect" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+              <label for="groupMembers" class="form-label">Μέλη</label>
+              <input type="text" class="form-control" id="groupMembers" readonly>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label for="description" class="form-label">Περιγραφή Διαδικασίας</label>
+            <textarea class="form-control" id="description" rows="3" required></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label for="bpmnFile" class="form-label">Αρχείο BPMN</label>
+            <input type="file" class="form-control" id="bpmnFile" accept=".bpmn">
+          </div>
+          <div class="col-md-6">
+            <label for="diagramSelect" class="form-label">Ή επιλέξτε αποθηκευμένο διάγραμμα</label>
+            <select id="diagramSelect" class="form-select"></select>
+          </div>
+
+          <div class="col-md-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-success">✅ Ανάθεση</button>
+          </div>
+        </form>
+
+        <div id="responseMsg" class="mt-4 alert d-none"></div>
+      </div>
+    </div>
+
+
+    <!-- Modeler -->
+    <div id="tab-modeler" class="d-none position-relative">
+      <div class="d-flex justify-content-between align-items-center bg-light border-bottom p-2">
+        <div>
+          <button id="saveBtn" class="btn btn-primary me-2">💾 Αποθήκευση</button>
+          <button id="publishBtn" class="btn btn-outline-success me-2">Publish</button>
+          <span id="publishTick" class="text-success d-none">✅</span>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+          <button id="undoBtn" class="btn btn-outline-secondary btn-sm rounded-circle">&#x21ba;</button>
+          <button id="redoBtn" class="btn btn-outline-secondary btn-sm rounded-circle">&#x21bb;</button>
+          <div class="ms-3">
+            <button id="zoomOutBtn" class="btn btn-outline-secondary btn-sm">-</button>
+            <span id="zoomDisplay">100%</span>
+            <button id="zoomInBtn" class="btn btn-outline-secondary btn-sm">+</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="paletteToggle" class="btn btn-outline-dark position-absolute" style="top: 10px; left: 50%; transform: translateX(-50%); z-index: 1100;">+</button>
+      <div id="canvas" style="height: 85vh; border: 1px solid #ccc;"></div>
+    </div>
+
+
+    <!-- Υπάλληλοι -->
+    <div id="tab-employees" class="d-none">
+      <div class="container py-4">
+        <h1 class="mb-4">👥 Διαχείριση Υπαλλήλων</h1>
+
+        <form id="employeeForm" class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="fullName" class="form-label">Ονοματεπώνυμο</label>
+            <input type="text" class="form-control" id="fullName" required>
+          </div>
+          <div class="col-md-6">
+            <label for="position" class="form-label">Θέση Εργασίας</label>
+            <input type="text" class="form-control" id="position" required>
+          </div>
+          <div class="col-md-6">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" required>
+          </div>
+          <div class="col-md-6">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" required>
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-success">➕ Προσθήκη</button>
+          </div>
+        </form>
+
+        <div id="formMsg" class="alert d-none"></div>
+
+        <h2 class="mt-5">📋 Υπάλληλοι</h2>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Ονοματεπώνυμο</th>
+              <th>Θέση</th>
+              <th>Username</th>
+              <th>Ενέργειες</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- Groups -->
+    <div id="tab-groups" class="d-none">
+      <div class="container py-4">
+        <h1 class="mb-4">👥 Διαχείριση Ομάδων Υπαλλήλων</h1>
+
+        <form id="groupForm" class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="groupName" class="form-label">Όνομα Group</label>
+            <input type="text" class="form-control" id="groupName" required>
+          </div>
+          <div class="col-md-6">
+            <label for="memberSelect" class="form-label">Μέλη</label>
+            <select id="memberSelect" class="form-select" multiple required></select>
+            <div class="form-text">Κρατήστε Ctrl για πολλαπλή επιλογή</div>
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-success">➕ Προσθήκη</button>
+          </div>
+        </form>
+
+        <div id="formMsg" class="alert d-none"></div>
+
+        <h2 class="mt-5">📂 Groups</h2>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Όνομα</th>
+              <th>Μέλη</th>
+              <th>Ενέργειες</th>
+            </tr>
+          </thead>
+          <tbody id="groupTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- QA Διαδικασίες -->
+    <div id="tab-qa" class="d-none container py-4">
+      <h1 class="mb-4">🛠️ Διαχείριση QA Διαδικασιών</h1>
+
+      <h2>Ατομικές Διαδικασίες</h2>
+      <table class="table table-bordered mb-5">
+        <thead>
+          <tr>
+            <th>Διαδικασία</th>
+            <th>Περιγραφή</th>
+            <th>Υπάλληλος</th>
+            <th>Θέση</th>
+            <th>Διάγραμμα</th>
+            <th>Ενέργειες</th>
+          </tr>
+        </thead>
+        <tbody id="individualTable"></tbody>
+      </table>
+
+      <h2>Διαδικασίες Groups</h2>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Διαδικασία</th>
+            <th>Περιγραφή</th>
+            <th>Group</th>
+            <th>Μέλη</th>
+            <th>Διάγραμμα</th>
+            <th>Ενέργειες</th>
+          </tr>
+        </thead>
+        <tbody id="qaGroupTable"></tbody> <!-- ΔΙΟΡΘΩΣΗ ID -->
+      </table>
+    </div>
+
+    <!-- Ποιοτικοί Στόχοι -->
+    <div id="tab-quality" class="d-none">
+      <h2 class="mb-4">🎯 Διαχείριση Ποιοτικών Στόχων</h2>
+
+      <form id="objectiveForm" class="mb-4">
+        <div class="row g-2">
+          <div class="col-md-3">
+            <input type="text" class="form-control" id="objName" placeholder="Φόρμα" list="formOptions" required>
+            <datalist id="formOptions"></datalist>
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control" id="objDesc" placeholder="Ερώτηση" list="questionOptions">
+            <datalist id="questionOptions"></datalist>
+          </div>
+          <div class="col-md-2">
+            <input type="number" step="0.01" class="form-control" id="objTarget" placeholder="Στόχος" required>
+            <small id="currentMeasurement" class="form-text"></small>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">Προσθήκη</button>
+          </div>
+        </div>
+      </form>
+
+      <ul class="list-group" id="objectiveList"></ul>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    
+    let employeeList = [];
+    let groupList = [];
+    let activeTab = 'employee';
+
+    async function loadDiagrams() {
+      const res = await fetch('/api/bpmn?published=true');
+      const diagrams = await res.json();
+      const select = document.getElementById('diagramSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Επιλογή --</option>';
+      diagrams.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadEmployees() {
+      const res = await fetch('/api/employees');
+      employeeList = await res.json();
+    }
+
+    async function loadGroups() {
+      const res = await fetch('/api/groups');
+      groupList = await res.json();
+      const select = document.getElementById('groupSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Επιλογή --</option>';
+      groupList.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateGroupMembers() {
+      const select = document.getElementById('groupSelect');
+      const group = groupList.find(g => g.id == select.value);
+      document.getElementById('groupMembers').value = group ? group.members.map(m => m.fullName).join(', ') : '';
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const btnEmp = document.getElementById('tabEmployee');
+      const btnGrp = document.getElementById('tabGroup');
+      const empFields = document.getElementById('employeeFields');
+      const grpFields = document.getElementById('groupFields');
+
+      if (!btnEmp || !btnGrp) return;
+
+      if (tab === 'employee') {
+        btnEmp.classList.add('btn-primary');
+        btnEmp.classList.remove('btn-outline-primary');
+        btnGrp.classList.remove('btn-primary');
+        btnGrp.classList.add('btn-outline-primary');
+
+        empFields.classList.remove('d-none');
+        grpFields.classList.add('d-none');
+
+        document.getElementById('employeeName').required = true;
+        document.getElementById('groupSelect').required = false;
+      } else {
+        btnGrp.classList.add('btn-primary');
+        btnGrp.classList.remove('btn-outline-primary');
+        btnEmp.classList.remove('btn-primary');
+        btnEmp.classList.add('btn-outline-primary');
+
+        grpFields.classList.remove('d-none');
+        empFields.classList.add('d-none');
+
+        document.getElementById('employeeName').required = false;
+        document.getElementById('groupSelect').required = true;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('tabEmployee')?.addEventListener('click', () => switchTab('employee'));
+      document.getElementById('tabGroup')?.addEventListener('click', () => switchTab('group'));
+      document.getElementById('groupSelect')?.addEventListener('change', updateGroupMembers);
+
+      document.getElementById('employeeName')?.addEventListener('input', function () {
+        const input = this.value.toLowerCase();
+        const suggestions = document.getElementById('employeeSuggestions');
+        suggestions.innerHTML = '';
+
+        if (!input) {
+          suggestions.classList.add('d-none');
+          return;
+        }
+
+        const matches = employeeList.filter(emp => emp.fullName.toLowerCase().includes(input));
+        if (matches.length === 0) {
+          suggestions.classList.add('d-none');
+          return;
+        }
+
+        matches.forEach(emp => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = emp.fullName;
+          li.addEventListener('click', () => {
+            document.getElementById('employeeName').value = emp.fullName;
+            document.getElementById('employeePosition').value = emp.position;
+            suggestions.classList.add('d-none');
+          });
+          suggestions.appendChild(li);
+        });
+
+        suggestions.classList.remove('d-none');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!document.getElementById('employeeName')?.contains(e.target)) {
+          document.getElementById('employeeSuggestions')?.classList.add('d-none');
+        }
+      });
+
+      document.getElementById('assignmentForm')?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('processName', document.getElementById('processName').value);
+        formData.append('description', document.getElementById('description').value);
+        const file = document.getElementById('bpmnFile').files[0];
+        if (file) formData.append('bpmnFile', file);
+        formData.append('diagramName', document.getElementById('diagramSelect').value);
+
+        let url;
+        if (activeTab === 'employee') {
+          formData.append('employeeName', document.getElementById('employeeName').value);
+          formData.append('employeePosition', document.getElementById('employeePosition').value);
+          url = '/api/qa/assign';
+        } else {
+          formData.append('groupId', document.getElementById('groupSelect').value);
+          url = '/api/qa/assign-group';
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+
+        const msg = document.getElementById('responseMsg');
+        const data = await response.json();
+        msg.classList.remove('d-none', 'alert-success', 'alert-danger');
+        msg.classList.add(response.ok ? 'alert-success' : 'alert-danger');
+        msg.textContent = response.ok
+          ? '✅ Η διαδικασία ανατέθηκε επιτυχώς'
+          : `❌ Σφάλμα: ${data.message || 'Αποτυχία ανάθεσης'}`;
+      });
+
+      loadEmployees();
+      loadGroups();
+      loadDiagrams();
+    });
+
+    // ----Modeler--- //
+
+    let bpmnModeler;
+
+    async function initModelerTab() {
+      if (bpmnModeler) return; // μην το ξαναφορτώνεις
+
+      bpmnModeler = new BpmnJS({ container: '#canvas' });
+
+      const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+        <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                          xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                          xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                          xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                          id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+          <bpmn:process id="Process_1" isExecutable="true">
+            <bpmn:startEvent id="StartEvent_1"/>
+          </bpmn:process>
+          <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+              <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+                <dc:Bounds x="100" y="100" width="36" height="36"/>
+              </bpmndi:BPMNShape>
+            </bpmndi:BPMNPlane>
+          </bpmndi:BPMNDiagram>
+        </bpmn:definitions>`;
+
+      await bpmnModeler.importXML(emptyDiagram);
+
+      let currentZoom = 1;
+      const canvas = bpmnModeler.get('canvas');
+      const commandStack = bpmnModeler.get('commandStack');
+
+      const updateZoomDisplay = () => {
+        document.getElementById('zoomDisplay').textContent = Math.round(currentZoom * 100) + '%';
+      };
+
+      const setZoom = (z) => {
+        currentZoom = Math.max(0.2, Math.min(4, z));
+        canvas.zoom(currentZoom);
+        updateZoomDisplay();
+      };
+
+      // Zoom & History
+      document.getElementById('zoomInBtn').addEventListener('click', () => setZoom(currentZoom + 0.1));
+      document.getElementById('zoomOutBtn').addEventListener('click', () => setZoom(currentZoom - 0.1));
+      document.getElementById('undoBtn').addEventListener('click', () => commandStack.undo());
+      document.getElementById('redoBtn').addEventListener('click', () => commandStack.redo());
+
+      updateZoomDisplay();
+
+      // Palette toggle
+      const paletteEl = document.querySelector('.djs-palette');
+      if (paletteEl) paletteEl.classList.add('hidden');
+
+      document.getElementById('paletteToggle').addEventListener('click', () => {
+        if (paletteEl) paletteEl.classList.toggle('hidden');
+      });
+
+      // Αποθήκευση
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        const result = await bpmnModeler.saveXML({ format: true });
+        const name = prompt('Αποθήκευση ως:', 'διάγραμμα');
+        if (!name) return;
+        const res = await fetch('/api/bpmn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, xml: result.xml })
+        });
+        if (res.ok) alert('✅ Αποθηκεύτηκε');
+        else alert('❌ Σφάλμα αποθήκευσης');
+      });
+
+      // Δημοσίευση toggle
+      document.getElementById('publishBtn').addEventListener('click', async () => {
+        const result = await bpmnModeler.saveXML({ format: true });
+        const name = prompt('Όνομα για δημοσίευση:', 'διάγραμμα');
+        if (!name) return;
+        const saveRes = await fetch('/api/bpmn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, xml: result.xml })
+        });
+        if (!saveRes.ok) return alert('❌ Σφάλμα αποθήκευσης');
+
+        const pubRes = await fetch(`/api/bpmn/${encodeURIComponent(name)}/toggle`, { method: 'PUT' });
+        if (pubRes.ok) {
+          document.getElementById('publishTick').classList.remove('d-none');
+        } else {
+          alert('❌ Σφάλμα δημοσίευσης');
+        }
+      });
+    }
+
+    // --- Διαχείρηση Υπαλλήλων--- // 
+    async function fetchEmployees() {
+      const res = await fetch('/api/employees');
+      const employees = await res.json();
+      const table = document.getElementById('employeeTable');
+      if (!table) return;
+      table.innerHTML = '';
+      employees.forEach(emp => {
+        const row = `<tr>
+          <td>${emp.fullName ?? ''}</td>
+          <td>${emp.position ?? ''}</td>
+          <td>${emp.username ?? ''}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteEmployee(${emp.id})">🗑️ Διαγραφή</button></td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function deleteEmployee(id) {
+      if (!confirm('Σίγουρα θέλετε να διαγράψετε τον υπάλληλο;')) return;
+      await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+      fetchEmployees();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('employeeForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const fullName = document.getElementById('fullName').value;
+          const position = document.getElementById('position').value;
+          const username = document.getElementById('username').value;
+          const password = document.getElementById('password').value;
+          const msg = document.getElementById('formMsg');
+          const res = await fetch('/api/employees', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fullName, position, username, password })
+          });
+          msg.classList.remove('d-none', 'alert-success', 'alert-danger');
+          msg.classList.add(res.ok ? 'alert-success' : 'alert-danger');
+          msg.textContent = res.ok ? '✅ Προστέθηκε ο υπάλληλος' : '❌ Σφάλμα προσθήκης';
+          if (res.ok) form.reset();
+          fetchEmployees();
+        });
+      }
+    });
+
+    //--- Διαχείρηση Ομάδων---//
+    async function loadGroupEmployees() {
+      const res = await fetch('/api/employees');
+      const employees = await res.json();
+      const select = document.getElementById('memberSelect');
+      if (!select) return;
+      select.innerHTML = '';
+      employees.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp.id;
+        opt.textContent = `${emp.fullName} - ${emp.position}`;
+        select.appendChild(opt);
+      });
+    }
+
+    async function fetchGroups() {
+      const res = await fetch('/api/groups');
+      const groups = await res.json();
+      const table = document.getElementById('groupTable');
+      if (!table) return;
+      table.innerHTML = '';
+      groups.forEach(g => {
+        const members = g.members.map(m => m.fullName).join(', ');
+        const row = `<tr>
+          <td>${g.name}</td>
+          <td>${members}</td>
+          <td>
+            <a href="assign-qa-process.html?groupId=${g.id}" class="btn btn-sm btn-primary me-2">Ανάθεση</a>
+            <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">🗑️ Διαγραφή</button>
+          </td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function deleteGroup(id) {
+      if (!confirm('Σίγουρα θέλετε να διαγράψετε το group;')) return;
+      await fetch(`/api/groups/${id}`, { method: 'DELETE' });
+      fetchGroups();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('groupForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const name = document.getElementById('groupName').value;
+          const memberSelect = document.getElementById('memberSelect');
+          const memberIds = Array.from(memberSelect.selectedOptions).map(o => parseInt(o.value));
+          const res = await fetch('/api/groups', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, memberIds })
+          });
+          const msg = document.getElementById('formMsg');
+          msg.classList.remove('d-none', 'alert-success', 'alert-danger');
+          msg.classList.add(res.ok ? 'alert-success' : 'alert-danger');
+          msg.textContent = res.ok ? '✅ Προστέθηκε το group' : '❌ Σφάλμα προσθήκης';
+          if (res.ok) form.reset();
+          fetchGroups();
+        });
+      }
+    });
+
+    // Ενημέρωση της showTab για το group tab
+    function showTab(tab) {
+      // ➤ Προσθήκη: αλλάζει το URL hash ώστε να διατηρείται στο refresh
+      history.replaceState(null, null, '#' + tab);
+
+      const allTabs = ['assign', 'modeler', 'employees', 'groups', 'qa', 'quality'];
+      allTabs.forEach(t => {
+        document.getElementById(`tab-${t}`)?.classList.add('d-none');
+      });
+      document.getElementById(`tab-${tab}`)?.classList.remove('d-none');
+
+      if (tab === 'modeler') initModelerTab?.();
+      if (tab === 'assign') switchTab?.('employee');
+      if (tab === 'employees') fetchEmployees();
+      if (tab === 'groups') {
+        loadGroupEmployees();
+        fetchGroups();
+      }
+      if (tab === 'qa') loadAll(); 
+      if (tab === 'quality') loadObjectives();
+    }
+
+
+    // --- Διαχείρηση QA Διαδικασιών---// 
+    let indData = [], groupData = [];
+
+    async function loadIndividual() {
+      const res = await fetch('/api/qa/all');
+      indData = await res.json();
+      const table = document.getElementById('individualTable');
+      table.innerHTML = '';
+      indData.forEach((p, idx) => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.fullName || ''}</td>
+          <td>${p.position || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-2" onclick="editInd(${idx})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteInd(${p.id})">🗑️</button>
+          </td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function loadGroups() {
+      const res = await fetch('/api/qa/group-all');
+      groupData = await res.json();
+      const table = document.getElementById('qaGroupTable');
+      table.innerHTML = '';
+      groupData.forEach((p, idx) => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.groupName || ''}</td>
+          <td>${p.members || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-2" onclick="editGroup(${idx})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteGroup(${p.id})">🗑️</button>
+          </td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    function editInd(idx) {
+      const p = indData[idx];
+      const processName = prompt('Όνομα Διαδικασίας', p.processName);
+      if (processName === null) return;
+      const description = prompt('Περιγραφή', p.description);
+      if (description === null) return;
+      const bpmnFileName = prompt('Αρχείο BPMN', p.bpmnFileName || '');
+      if (bpmnFileName === null) return;
+      const fullName = prompt('Υπάλληλος', p.fullName);
+      if (fullName === null) return;
+      const position = prompt('Θέση', p.position);
+      if (position === null) return;
+      fetch('/api/qa/' + p.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processName, description, bpmnFileName, fullName, position })
+      }).then(loadAll);
+    }
+
+    function deleteInd(id) {
+      if (!confirm('Διαγραφή διαδικασίας;')) return;
+      fetch('/api/qa/' + id, { method: 'DELETE' }).then(loadAll);
+    }
+
+    function editGroup(idx) {
+      const p = groupData[idx];
+      const processName = prompt('Όνομα Διαδικασίας', p.processName);
+      if (processName === null) return;
+      const description = prompt('Περιγραφή', p.description);
+      if (description === null) return;
+      const bpmnFileName = prompt('Αρχείο BPMN', p.bpmnFileName || '');
+      if (bpmnFileName === null) return;
+      const groupName = prompt('Όνομα Group', p.groupName);
+      if (groupName === null) return;
+      const members = prompt('Μέλη', p.members);
+      if (members === null) return;
+      fetch('/api/qa/group/' + p.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processName, description, bpmnFileName, groupName, members })
+      }).then(loadAll);
+    }
+
+    function deleteGroup(id) {
+      if (!confirm('Διαγραφή διαδικασίας;')) return;
+      fetch('/api/qa/group/' + id, { method: 'DELETE' }).then(loadAll);
+    }
+
+    function loadAll() {
+      loadIndividual();
+      loadGroups();
+    }
+
+    // --- Διαχείριση Ποιοτικών Στόχων --- //
+    const BASE_URL = '/api/objectives';
+    const FORM_URL = '/api/forms';
+    const AVG_URL = '/api/responses/averages';
+
+    let formsCache = [];
+    let selectedFormId = null;
+    let selectedQuestion = null;
+    let currentAverages = {};
+
+    async function loadForms() {
+      const res = await fetch(FORM_URL);
+      if (!res.ok) return;
+      formsCache = await res.json();
+      const list = document.getElementById('formOptions');
+      list.innerHTML = '';
+      formsCache.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.title;
+        list.appendChild(opt);
+      });
+    }
+
+    function populateQuestions(form) {
+      const qList = document.getElementById('questionOptions');
+      qList.innerHTML = '';
+      form.questions.forEach(q => {
+        const opt = document.createElement('option');
+        opt.value = q;
+        qList.appendChild(opt);
+      });
+    }
+
+    async function fetchAverages(formId) {
+      const res = await fetch(`${AVG_URL}/${formId}`);
+      if (res.ok) currentAverages = await res.json();
+      else currentAverages = {};
+      updateMeasurement();
+    }
+
+    function updateMeasurement() {
+      const avg = currentAverages[selectedQuestion];
+      const target = parseFloat(document.getElementById('objTarget')?.value);
+      const el = document.getElementById('currentMeasurement');
+      if (avg !== undefined) {
+        const diff = !isNaN(target) ? (avg - target).toFixed(2) : '';
+        el.textContent = `Τρέχουσα: ${avg}${diff ? ` (Διαφορά ${diff})` : ''}`;
+      } else {
+        el.textContent = '';
+      }
+    }
+
+    async function loadObjectives() {
+      const res = await fetch(BASE_URL);
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = document.getElementById('objectiveList');
+      list.innerHTML = '';
+      if (data.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν στόχοι.</li>';
+        return;
+      }
+
+      for (const obj of data) {
+        const item = document.createElement('li');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        const statusRes = await fetch(`${BASE_URL}/${obj.id}/status`);
+        let status = null;
+        if (statusRes.ok) status = await statusRes.json();
+
+        let statusBadge = '';
+        if (status && status.latestValue !== undefined) {
+          const diff = status.difference;
+          const color = diff >= 0 ? 'success' : 'danger';
+          const sign = diff > 0 ? '+' : '';
+          statusBadge = `<span class="badge text-bg-${color} me-2">${status.latestValue} (${sign}${diff.toFixed(2)})</span>`;
+        }
+
+        item.innerHTML = `
+          <div><strong>${obj.name}</strong> - ${obj.description || ''}</div>
+          <div>
+            <span class="badge text-bg-secondary me-2">🎯 ${obj.targetValue}</span>
+            ${statusBadge}
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteObjective(${obj.id})">🗑️</button>
+          </div>`;
+        list.appendChild(item);
+      }
+    }
+
+    async function deleteObjective(id) {
+      if (!confirm('Διαγραφή στόχου;')) return;
+      const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+      if (res.ok) loadObjectives();
+      else alert('Αποτυχία διαγραφής');
+    }
+
+    document.getElementById('objectiveForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('objName').value.trim();
+      const description = document.getElementById('objDesc').value.trim();
+      const target = parseFloat(document.getElementById('objTarget').value);
+      const payload = {
+        name,
+        description,
+        targetValue: target,
+        formId: selectedFormId,
+        questionText: selectedQuestion
+      };
+
+      const res = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        document.getElementById('objectiveForm').reset();
+        selectedFormId = null;
+        selectedQuestion = null;
+        currentAverages = {};
+        loadObjectives();
+      } else {
+        alert('Σφάλμα δημιουργίας στόχου');
+      }
+    });
+
+    document.getElementById('objName')?.addEventListener('focus', loadForms);
+    document.getElementById('objName')?.addEventListener('change', e => {
+      const form = formsCache.find(f => f.title === e.target.value);
+      selectedQuestion = null;
+      currentAverages = {};
+      if (form) {
+        selectedFormId = form.id;
+        populateQuestions(form);
+        fetchAverages(form.id);
+      } else {
+        selectedFormId = null;
+        document.getElementById('questionOptions').innerHTML = '';
+        updateMeasurement();
+      }
+    });
+
+    document.getElementById('objDesc')?.addEventListener('change', e => {
+      selectedQuestion = e.target.value;
+      updateMeasurement();
+    });
+
+    document.getElementById('objTarget')?.addEventListener('input', updateMeasurement);
+
+    // Προεπιλεγμένη καρτέλα
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash.substring(1); // π.χ. #employees -> "employees"
+      const validTabs = ['assign', 'modeler', 'employees', 'groups', 'qa', 'quality'];
+      showTab(validTabs.includes(hash) ? hash : 'assign');
+    });
+  </script>
+</body>
+</html>

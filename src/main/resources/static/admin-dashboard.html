@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Πίνακας Διαδικασιών QA</title>
+  <title>QAssurance</title>
   <link rel="icon" type="image/png" href="/icons/development_cognitive_progress_improvement_growth_icon.png" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/Admin_dashboard.css" />
@@ -17,8 +17,11 @@
       </span>
 
       <div class="d-flex">
+        <button class="btn btn-sidebar" onclick="showTab('processes')">Διαδικασίες</button>
         <button class="btn btn-sidebar me-2" onclick="showTab('diagrams')">Διαγράμματα</button>
         <button class="btn btn-sidebar" onclick="showTab('forms')">Ερωτηματολόγια</button>
+        <button class="btn btn-sidebar" onclick="showTab('employees')">Υπάλληλοι</button>
+        <button class="btn btn-sidebar" onclick="showTab('groups')">Ομάδες</button>
       </div>
     </div>
   </nav>
@@ -32,27 +35,27 @@
     <!-- Sidebar Menu -->
     <div class="offcanvas offcanvas-start text-white custom-sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="sidebarMenuLabel">🚀 Μενού Πλοήγησης</h5>
+        <h5 class="offcanvas-title" id="sidebarMenuLabel">Menu</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Κλείσιμο"></button>
       </div>
       <div class="offcanvas-body ps-3 pe-3">
         <div class="d-flex flex-column gap-3 align-items-start">
-          <a href="assign-qa-process.html" class="btn btn-sidebar">
+          <a href="edit-dashboard.html#assign" class="btn btn-sidebar">
             <img src="/icons/plus_round_icon.png" alt="plus" width="20" class="me-2"/> Ανάθεση QA Διαδικασίας
           </a>
-          <a href="modeler.html" class="btn btn-sidebar">
+          <a href="edit-dashboard.html#modeler" class="btn btn-sidebar">
             <img src="/icons/database_diagram_chart_information_data_icon.png" alt="plus" width="20" class="me-2"/> Νέο Σχεδιάγραμμα
           </a>
-          <a href="employee-management.html" class="btn btn-sidebar">
+          <a href="edit-dashboard.html#employees" class="btn btn-sidebar">
             <img src="/icons/account_user_avatar_profile_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Υπαλλήλων
           </a>
-          <a href="group-management.html" class="btn btn-sidebar">
-            <img src="/icons/group_people_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Groups
+          <a href="edit-dashboard.html#groups" class="btn btn-sidebar">
+            <img src="/icons/group_people_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Ομάδων
           </a>
-          <a href="qa-process-management.html" class="btn btn-sidebar">
+          <a href="edit-dashboard.html#qa" class="btn btn-sidebar">
             <img src="/icons/settings_setting_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση QA Διαδικασιών
           </a>
-          <a href="quality-dashboard.html" class="btn btn-sidebar">
+          <a href="edit-dashboard.html#quality" class="btn btn-sidebar">
             <img src="/icons/target_arrow_filled_icon.png" alt="plus" width="20" class="me-2"/> Διαχείριση Ποιοτικών Στόχων
           </a>
         </div>
@@ -60,6 +63,39 @@
     </div>
 
     <!-- Tabs -->
+    <div id="tab-processes" class="d-none">
+      <div class="mx-auto" style="max-width: 1200px;">
+        <h2 class="mt-5">🛠️ Ατομικές Διαδικασίες</h2>
+        <table class="table table-bordered mb-5">
+          <thead>
+            <tr>
+              <th>Διαδικασία</th>
+              <th>Περιγραφή</th>
+              <th>Υπάλληλος</th>
+              <th>Θέση</th>
+              <th>Διάγραμμα</th>
+            </tr>
+          </thead>
+          <tbody id="readonlyIndividualTable"></tbody>
+        </table>
+
+        <h2>👥 Διαδικασίες Groups</h2>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Διαδικασία</th>
+              <th>Περιγραφή</th>
+              <th>Group</th>
+              <th>Μέλη</th>
+              <th>Διάγραμμα</th>
+            </tr>
+          </thead>
+          <tbody id="readonlyGroupTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+
     <div id="tab-diagrams">
       <h2 class="mt-5">📂 Αποθηκευμένα BPMN Διαγράμματα</h2>
       <table class="table table-bordered mb-4">
@@ -92,12 +128,56 @@
     </div>
   </div>
 
+  <div id="tab-employees" class="d-none">
+    <div class="mx-auto" style="max-width: 900px;">
+      <h2 class="mt-5"><img src="/icons/account_user_avatar_profile_icon.png" alt="icon" width="32" class="me-2" />Υπάλληλοι</h2>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Ονοματεπώνυμο</th>
+            <th>Θέση</th>
+            <th>Username</th>
+          </tr>
+        </thead>
+        <tbody id="employeeOnlyTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-groups" class="d-none">
+    <div class="mx-auto" style="max-width: 900px;">
+      <h2 class="mt-5">
+        <img src="/icons/group_people_icon.png" alt="group" width="32" class="me-2" />
+        Ομάδες
+      </h2>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Όνομα</th>
+            <th>Μέλη</th>
+          </tr>
+        </thead>
+        <tbody id="groupListTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function showTab(tab) {
+      location.hash = '#' + tab;
+
       document.getElementById('tab-diagrams').classList.toggle('d-none', tab !== 'diagrams');
       document.getElementById('tab-forms').classList.toggle('d-none', tab !== 'forms');
+      document.getElementById('tab-employees')?.classList.toggle('d-none', tab !== 'employees');
+      document.getElementById('tab-groups')?.classList.toggle('d-none', tab !== 'groups');
+      document.getElementById('tab-processes')?.classList.toggle('d-none', tab !== 'processes');
+
+      if (tab === 'employees') fetchEmployeesOnly();
+      if (tab === 'groups') fetchGroupsOnly();
+      if (tab === 'processes') fetchProcessesOnly();
     }
 
     const BASE_URL = 'http://localhost:8080/api/forms';
@@ -173,6 +253,46 @@
       if (res.ok) loadSavedForms();
       else alert("Αποτυχία διαγραφής");
     }
+
+    async function fetchProcessesOnly() {
+      await fetchIndividualProcesses();
+      await fetchGroupProcesses();
+    }
+
+    async function fetchIndividualProcesses() {
+      const res = await fetch('/api/qa/all');
+      const data = await res.json();
+      const table = document.getElementById('readonlyIndividualTable');
+      table.innerHTML = '';
+      data.forEach(p => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.fullName || ''}</td>
+          <td>${p.position || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    async function fetchGroupProcesses() {
+      const res = await fetch('/api/qa/group-all');
+      const data = await res.json();
+      const table = document.getElementById('readonlyGroupTable');
+      table.innerHTML = '';
+      data.forEach(p => {
+        const row = `<tr>
+          <td>${p.processName || ''}</td>
+          <td>${p.description || ''}</td>
+          <td>${p.groupName || ''}</td>
+          <td>${p.members || ''}</td>
+          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
 
     async function loadSavedForms() {
       const res = await fetch(BASE_URL);
@@ -266,12 +386,53 @@
       }
     }
 
+    async function fetchEmployeesOnly() {
+      const res = await fetch('/api/employees');
+      const employees = await res.json();
+      const table = document.getElementById('employeeOnlyTable');
+      table.innerHTML = '';
+      employees.forEach(emp => {
+        const row = `<tr>
+          <td>${emp.fullName ?? ''}</td>
+          <td>${emp.position ?? ''}</td>
+          <td>${emp.username ?? ''}</td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+    
+    async function fetchGroupsOnly() {
+      const res = await fetch('/api/groups');
+      const groups = await res.json();
+      const table = document.getElementById('groupListTable');
+      table.innerHTML = '';
+      groups.forEach(g => {
+        const members = g.members.map(m => m.fullName).join(', ');
+        const row = `<tr>
+          <td>${g.name}</td>
+          <td>${members}</td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+
     window.addEventListener('DOMContentLoaded', () => {
       addQuestion();
       loadDiagrams();
       loadSavedForms();
       loadActiveFormsWithAverages();
+
+      // ➤ Άνοιξε το tab από το URL hash, αλλιώς δείξε το default (π.χ. 'diagrams')
+      const tabFromHash = location.hash?.substring(1);
+      const availableTabs = ['diagrams', 'forms', 'employees', 'groups', 'processes'];
+      if (availableTabs.includes(tabFromHash)) {
+        showTab(tabFromHash);
+      } else {
+        showTab('diagrams'); // default
+      }
     });
+
   </script>
 </body>
 </html>
