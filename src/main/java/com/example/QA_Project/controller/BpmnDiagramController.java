@@ -6,6 +6,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.StringReader;
+
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
+import javax.xml.xpath.*;
+import java.util.Iterator;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +33,46 @@ public class BpmnDiagramController {
         if (diagram.getName() == null || diagram.getName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Missing diagram name");
         }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+
+            Document doc = factory.newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(diagram.getXml())));
+            doc.getDocumentElement().normalize();
+
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            xpath.setNamespaceContext(new NamespaceContext() {
+                @Override
+                public String getNamespaceURI(String prefix) {
+                    if ("bpmn".equals(prefix)) {
+                        return "http://www.omg.org/spec/BPMN/20100524/MODEL";
+                    } else if ("qa".equals(prefix)) {
+                        return "http://example.com/qa";
+                    }
+                    return XMLConstants.NULL_NS_URI;
+                }
+
+                @Override public String getPrefix(String uri) { return null; }
+                @Override public Iterator<String> getPrefixes(String uri) { return null; }
+            });
+
+            // Όλα τα userTasks
+            Double total = (Double) xpath.evaluate("count(//bpmn:userTask)", doc, XPathConstants.NUMBER);
+            diagram.setUserTaskCount(total.intValue());
+
+            // Ολοκληρωμένα userTasks (με qa:completed="true")
+            Double completed = (Double) xpath.evaluate("count(//bpmn:userTask[@qa:completed='true'])", doc, XPathConstants.NUMBER);
+            diagram.setCompletedUserTaskCount(completed.intValue());
+
+            System.out.println("UserTasks: " + total.intValue() + " | Completed: " + completed.intValue());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            diagram.setUserTaskCount(0);
+            diagram.setCompletedUserTaskCount(0);
+        }
+
         repository.save(diagram);
         return ResponseEntity.ok().build();
     }

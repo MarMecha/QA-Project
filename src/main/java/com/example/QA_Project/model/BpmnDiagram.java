@@ -16,6 +16,12 @@ public class BpmnDiagram {
     @Column(nullable = false)
     private boolean published = false;
 
+    @Column(nullable = false)
+    private int userTaskCount = 0;
+
+    @Column(nullable = false)
+    private int completedUserTaskCount = 0;
+
     public String getName() {
         return name;
     }
@@ -38,5 +44,22 @@ public class BpmnDiagram {
 
     public void setPublished(boolean published) {
         this.published = published;
+    }
+
+    public int getUserTaskCount() {
+        return userTaskCount;
+    }
+
+    public void setUserTaskCount(int userTaskCount) {
+        this.userTaskCount = userTaskCount;
+    }
+
+        
+    public int getCompletedUserTaskCount() {
+        return completedUserTaskCount;
+    }
+
+    public void setCompletedUserTaskCount(int count) {
+        this.completedUserTaskCount = count;
     }
 }

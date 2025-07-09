@@ -16,3 +16,11 @@
   border-bottom: 1px solid #ddd;
   padding-bottom: 6px;
 }
+
+.completed-label {
+    font-size: 0.75em;
+    color: green;
+    background: #eaffea;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
