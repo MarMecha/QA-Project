@@ -270,7 +270,7 @@
           <td>${p.description || ''}</td>
           <td>${p.fullName || ''}</td>
           <td>${p.position || ''}</td>
-          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>${p.bpmnFileName ? `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
         </tr>`;
         table.innerHTML += row;
       });
@@ -287,7 +287,7 @@
           <td>${p.description || ''}</td>
           <td>${p.groupName || ''}</td>
           <td>${p.members || ''}</td>
-          <td>${p.bpmnFileName ? `<a href="modeler.html?name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
+          <td>${p.bpmnFileName ? `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
         </tr>`;
         table.innerHTML += row;
       });
@@ -343,7 +343,7 @@
       diagrams.forEach(d => {
         const row = document.createElement('tr');
         const status = d.published ? '✅' : '—';
-        row.innerHTML = `<td><a href="modeler.html?name=${encodeURIComponent(d.name)}">${d.name}</a></td><td>${status}</td>`;
+        row.innerHTML = `<td><a href="edit-dashboard.html#modeler&name=${encodeURIComponent(d.name)}">${d.name}</a></td><td>${status}</td>`;
         list.appendChild(row);
       });
     }

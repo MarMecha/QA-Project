@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="/icons/development_cognitive_progress_improvement_growth_icon.png" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/Admin_dashboard.css" />
+  <link rel="stylesheet" href="css/Edit_dashboard.css" />
   <!-- BPMN Styles -->
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/bpmn-font/css/bpmn.css" />
@@ -130,11 +131,31 @@
             <span id="zoomDisplay">100%</span>
             <button id="zoomInBtn" class="btn btn-outline-secondary btn-sm">+</button>
           </div>
+          <button id="openChatBtn" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#chatModal">Chat</button>
         </div>
       </div>
 
       <button id="paletteToggle" class="btn btn-outline-dark position-absolute" style="top: 10px; left: 50%; transform: translateX(-50%); z-index: 1100;">+</button>
       <div id="canvas" style="height: 85vh; border: 1px solid #ccc;"></div>
+      <select id="employeeSelect" class="form-select position-absolute d-none" style="width:200px; z-index:1000;"></select>
+
+      <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">🗨️ Συνομιλία</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="chatMessages" style="max-height:60vh; overflow-y:auto;"></div>
+              <textarea id="chatInput" class="form-control mt-2" rows="2" placeholder="Γράψε μήνυμα..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button id="sendChatBtn" class="btn btn-primary">Αποστολή</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
 
@@ -285,11 +306,14 @@
   </div>
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     
     let employeeList = [];
     let groupList = [];
+    const assigneeOverlays = {};
     let activeTab = 'employee';
+    let diagramName = null;
 
     async function loadDiagrams() {
       const res = await fetch('/api/bpmn?published=true');
@@ -473,6 +497,7 @@
         </bpmn:definitions>`;
 
       await bpmnModeler.importXML(emptyDiagram);
+      renderAssigneeOverlays(); 
 
       let currentZoom = 1;
       const canvas = bpmnModeler.get('canvas');
@@ -507,12 +532,16 @@
       // Αποθήκευση
       document.getElementById('saveBtn').addEventListener('click', async () => {
         const result = await bpmnModeler.saveXML({ format: true });
+        let xml = result.xml;
+        if (!xml.includes('xmlns:camunda') && xml.includes('camunda:assignee')) {
+          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:camunda="http://camunda.org/schema/1.0/bpmn"');
+        }
         const name = prompt('Αποθήκευση ως:', 'διάγραμμα');
         if (!name) return;
         const res = await fetch('/api/bpmn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, xml: result.xml })
+          body: JSON.stringify({ name, xml })
         });
         if (res.ok) alert('✅ Αποθηκεύτηκε');
         else alert('❌ Σφάλμα αποθήκευσης');
@@ -521,22 +550,92 @@
       // Δημοσίευση toggle
       document.getElementById('publishBtn').addEventListener('click', async () => {
         const result = await bpmnModeler.saveXML({ format: true });
+        let xml = result.xml;
+        if (!xml.includes('xmlns:camunda') && xml.includes('camunda:assignee')) {
+          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:camunda="http://camunda.org/schema/1.0/bpmn"');
+        }
         const name = prompt('Όνομα για δημοσίευση:', 'διάγραμμα');
         if (!name) return;
         const saveRes = await fetch('/api/bpmn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, xml: result.xml })
+          body: JSON.stringify({ name, xml })
         });
         if (!saveRes.ok) return alert('❌ Σφάλμα αποθήκευσης');
 
         const pubRes = await fetch(`/api/bpmn/${encodeURIComponent(name)}/toggle`, { method: 'PUT' });
         if (pubRes.ok) {
           document.getElementById('publishTick').classList.remove('d-none');
+          diagramName = name;
         } else {
           alert('❌ Σφάλμα δημοσίευσης');
         }
       });
+    
+      const eventBus = bpmnModeler.get('eventBus');
+      eventBus.on('element.click', e => {
+        const element = e.element;
+        if (element.type === 'bpmn:UserTask') {
+          showEmployeeSelect(element, e.originalEvent);
+        } else {
+          hideEmployeeSelect();
+        }
+      });
+      eventBus.on('element.changed', e => {
+        if (e.element.type === 'bpmn:UserTask') {
+          updateAssigneeOverlay(e.element);
+        }
+      });
+    }
+
+    function showEmployeeSelect(element, evt) {
+      const select = document.getElementById('employeeSelect');
+      select.innerHTML = '<option value="">-- Εκχώρηση --</option>';
+      employeeList.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp.fullName;
+        opt.textContent = emp.fullName;
+        select.appendChild(opt);
+      });
+      select.value = element.businessObject.get('camunda:assignee') || '';
+      select.style.left = evt.pageX + 'px';
+      select.style.top  = evt.pageY + 'px';
+      select.classList.remove('d-none');
+      select.onchange = () => {
+        if (select.value) {
+          const modeling = bpmnModeler.get('modeling');
+          modeling.updateProperties(element, { 'camunda:assignee': select.value });
+          updateAssigneeOverlay(element);
+        }
+        select.classList.add('d-none');
+      };
+    }
+
+    function hideEmployeeSelect() {
+      document.getElementById('employeeSelect').classList.add('d-none');
+    }
+
+    function updateAssigneeOverlay(element) {
+      const overlays = bpmnModeler.get('overlays');
+      const existing = assigneeOverlays[element.id];
+      if (existing) overlays.remove(existing);
+
+      const assignee = element.businessObject.get('camunda:assignee');
+      if (assignee) {
+        const div = document.createElement('div');
+        div.className = 'assignee-label';
+        div.textContent = assignee;
+        const id = overlays.add(element, {
+          position: { bottom: 2, right: 2 },
+          html: div
+        });
+        assigneeOverlays[element.id] = id;
+      }
+    }
+
+    function renderAssigneeOverlays() {
+      const registry = bpmnModeler.get('elementRegistry');
+      registry.filter(e => e.type === 'bpmn:UserTask').forEach(updateAssigneeOverlay);
     }
 
     // --- Διαχείρηση Υπαλλήλων--- // 
@@ -922,12 +1021,106 @@
 
     document.getElementById('objTarget')?.addEventListener('input', updateMeasurement);
 
+     // --- Chat Functions --- //
+    async function loadChatMessages(name) {
+      if (!name) return;
+      try {
+        const res = await fetch(`/api/chat/${encodeURIComponent(name)}`);
+        if (!res.ok) throw new Error(await res.text());
+        const messages = await res.json();
+
+        const chatBox = document.getElementById('chatMessages');
+        chatBox.innerHTML = '';
+
+        messages.forEach(msg => {
+          const div = document.createElement('div');
+          div.innerHTML = `<strong>${msg.sender || 'Χρήστης'}:</strong> ${msg.message}<br><small class="text-muted">${new Date(msg.sentAt).toLocaleString('el-GR')}</small>`;
+          chatBox.appendChild(div);
+        });
+      } catch (err) {
+        console.error('❌ Σφάλμα φόρτωσης chat:', err);
+      }
+    }
+
+
+    document.getElementById('sendChatBtn').addEventListener('click', async () => {
+      const messageInput = document.getElementById('chatInput');
+      const messageText  = messageInput.value.trim();
+      const senderName   = localStorage.getItem('employeeName');
+      const processName  = diagramName;
+
+      if (!messageText || !senderName || !processName) return;
+
+      const messageData = {
+        name: processName,
+        message: messageText,
+        sender: senderName
+      };
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(messageData)
+        });
+
+        if (res.ok) {
+          messageInput.value = '';
+          await loadChatMessages(processName);
+        } else {
+          alert('❌ Σφάλμα αποστολής μηνύματος');
+        }
+      } catch (err) {
+        console.error('❌ Σφάλμα API:', err);
+      }
+    });
+
+    document.getElementById('chatModal').addEventListener('shown.bs.modal', () => {
+      loadChatMessages(diagramName);
+    });
+
+    const paletteToggle = document.getElementById('paletteToggle');
+    const chatModal = document.getElementById('chatModal');
+
+    chatModal.addEventListener('show.bs.modal', () => {
+      paletteToggle.style.display = 'none';
+    });
+
+    chatModal.addEventListener('hidden.bs.modal', () => {
+      paletteToggle.style.display = 'inline-block'; // ή 'block' αν ήταν block αρχικά
+    });
+
+
     // Προεπιλεγμένη καρτέλα
     window.addEventListener('DOMContentLoaded', () => {
-      const hash = window.location.hash.substring(1); // π.χ. #employees -> "employees"
+      const hash = window.location.hash.substring(1); // π.χ. modeler&name=example.bpmn
+      const parts = hash.split('&');
+      const tab = parts[0];
+      const nameParam = parts.find(p => p.startsWith('name='));
+      const bpmnName = nameParam ? decodeURIComponent(nameParam.split('=')[1]) : null;
+
       const validTabs = ['assign', 'modeler', 'employees', 'groups', 'qa', 'quality'];
-      showTab(validTabs.includes(hash) ? hash : 'assign');
+      const activeTab = validTabs.includes(tab) ? tab : 'assign';
+
+      showTab(activeTab);
+
+      if (activeTab === 'modeler' && bpmnName) {
+        initModelerTab().then(async () => {
+          try {
+            const res = await fetch(`/api/bpmn/${encodeURIComponent(bpmnName)}`);
+            const data = await res.json();   // ✅ σωστό
+            const xml = data.xml;
+            console.log('XML LOADED:', xml);
+            await bpmnModeler.importXML(xml);
+            diagramName = bpmnName; // για χρήση π.χ. στο chat
+          } catch (err) {
+            alert('❌ Σφάλμα φόρτωσης διαγράμματος');
+            console.error(err);
+          }
+        });
+      }
     });
+
   </script>
 </body>
 </html>

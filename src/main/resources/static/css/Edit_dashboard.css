@@ -1,0 +1,18 @@
+.assignee-label {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+#chatMessages {
+  font-size: 0.9em;
+}
+
+#chatMessages div {
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 6px;
+}
