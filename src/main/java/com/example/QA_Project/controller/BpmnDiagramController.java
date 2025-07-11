@@ -105,4 +105,13 @@ public class BpmnDiagramController {
         repository.save(d);
         return ResponseEntity.ok(d);
     }
+
+    @DeleteMapping("/{name}")
+    public ResponseEntity<?> deleteDiagram(@PathVariable String name) {
+        if (!repository.existsById(name)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(name);
+        return ResponseEntity.ok().build();
+    }
 }

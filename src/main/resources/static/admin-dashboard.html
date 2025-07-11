@@ -340,12 +340,46 @@
         list.innerHTML = '<tr><td colspan="2" class="text-muted">Δεν υπάρχουν διαγράμματα.</td></tr>';
         return;
       }
-      diagrams.forEach(d => {
+      diagrams.slice().reverse().forEach(d => {
         const row = document.createElement('tr');
-        const status = d.published ? '✅' : '—';
-        row.innerHTML = `<td><a href="edit-dashboard.html#modeler&name=${encodeURIComponent(d.name)}">${d.name}</a></td><td>${status}</td>`;
+        const nameCell = document.createElement('td');
+        nameCell.innerHTML = `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(d.name)}">${d.name}</a>`;
+        const actionCell = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-outline-success';
+        btn.textContent = d.published ? 'Publish' : 'Un-Publish';
+        btn.onclick = () => toggleDiagramPublish(d.name);
+        actionCell.appendChild(btn);
+        const deleteCell = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-sm btn-outline-danger';
+        delBtn.textContent = 'Διαγραφή';
+        delBtn.onclick = () => deleteDiagram(d.name);
+        deleteCell.appendChild(delBtn);
+        row.appendChild(nameCell);
+        row.appendChild(actionCell);
+        row.appendChild(deleteCell);
         list.appendChild(row);
       });
+    }
+
+    async function toggleDiagramPublish(name) {
+      const res = await fetch(`/api/bpmn/${encodeURIComponent(name)}/toggle`, { method: 'PUT' });
+      if (res.ok) {
+        loadDiagrams();
+      } else {
+        alert('❌ Σφάλμα δημοσίευσης');
+      }
+    }
+
+    async function deleteDiagram(name) {
+      if (!confirm('Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτό το διάγραμμα;')) return;
+      const res = await fetch(`/api/bpmn/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadDiagrams();
+      } else {
+        alert('❌ Αποτυχία διαγραφής');
+      }
     }
 
     async function loadActiveFormsWithAverages() {

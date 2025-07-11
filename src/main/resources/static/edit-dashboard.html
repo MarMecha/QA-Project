@@ -14,7 +14,7 @@
 
   <!-- BPMN JS -->
   <script src="https://unpkg.com/bpmn-js@11.5.0/dist/bpmn-modeler.development.js"></script>
-
+  
 </head>
 <body class="bg-light">
   <nav class="navbar custom-sidebar px-3 d-flex align-items-center">
@@ -119,8 +119,6 @@
       <div class="d-flex justify-content-between align-items-center bg-light border-bottom p-2">
         <div>
           <button id="saveBtn" class="btn btn-primary me-2">💾 Αποθήκευση</button>
-          <button id="publishBtn" class="btn btn-outline-success me-2">Publish</button>
-          <span id="publishTick" class="text-success d-none">✅</span>
         </div>
 
         <div class="d-flex gap-2 align-items-center">
@@ -559,33 +557,6 @@
         else alert('❌ Σφάλμα αποθήκευσης');
       });
 
-      // Δημοσίευση toggle
-      document.getElementById('publishBtn').addEventListener('click', async () => {
-        const result = await bpmnModeler.saveXML({ format: true });
-        let xml = result.xml;
-        if (!xml.includes('xmlns:camunda') && xml.includes('camunda:assignee')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:camunda="http://camunda.org/schema/1.0/bpmn"');
-        }
-        if (!xml.includes('xmlns:qa') && xml.includes('qa:completed')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:qa="http://example.com/qa"');
-        }
-        const name = prompt('Όνομα για δημοσίευση:', 'διάγραμμα');
-        if (!name) return;
-        const saveRes = await fetch('/api/bpmn', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, xml })
-        });
-        if (!saveRes.ok) return alert('❌ Σφάλμα αποθήκευσης');
-
-        const pubRes = await fetch(`/api/bpmn/${encodeURIComponent(name)}/toggle`, { method: 'PUT' });
-        if (pubRes.ok) {
-          document.getElementById('publishTick').classList.remove('d-none');
-          diagramName = name;
-        } else {
-          alert('❌ Σφάλμα δημοσίευσης');
-        }
-      });
     
       const eventBus = bpmnModeler.get('eventBus');
       eventBus.on('element.click', e => {
