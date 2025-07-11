@@ -64,29 +64,29 @@
         <form id="assignmentForm" class="row g-3 position-relative">
           <div class="col-md-6">
             <label for="processName" class="form-label">Ονομασία Διαδικασίας</label>
-            <input type="text" class="form-control" id="processName" required>
+            <input type="text" class="form-control" id="processName" name="processName" required>
           </div>
 
           <div id="employeeFields" class="row g-3">
             <div class="col-md-6 position-relative">
               <label for="employeeName" class="form-label">Ονοματεπώνυμο Υπαλλήλου</label>
-              <input type="text" class="form-control" id="employeeName" autocomplete="off" required>
+              <input type="text" class="form-control" id="employeeName" name="employeeName" autocomplete="off" required>
               <ul id="employeeSuggestions" class="list-group d-none" style="position:absolute; z-index:1000; width:100%; background:#fff; border:1px solid #ccc;"></ul>
             </div>
             <div class="col-md-6">
               <label for="employeePosition" class="form-label">Θέση Εργασίας</label>
-              <input type="text" class="form-control" id="employeePosition" readonly>
+              <input type="text" class="form-control" id="employeePosition" name="employeePosition" readonly>
             </div>
           </div>
 
           <div id="groupFields" class="row g-3 d-none">
             <div class="col-md-6">
               <label for="groupSelect" class="form-label">Όνομα Group Υπαλλήλων</label>
-              <select id="groupSelect" class="form-select"></select>
+              <select id="groupSelect" name="groupSelect" class="form-select"></select>
             </div>
             <div class="col-md-6">
               <label for="groupMembers" class="form-label">Μέλη</label>
-              <input type="text" class="form-control" id="groupMembers" readonly>
+              <input type="text" class="form-control" id="groupMembers" name="groupMembers" readonly>
             </div>
           </div>
 
@@ -97,11 +97,11 @@
 
           <div class="col-md-6">
             <label for="bpmnFile" class="form-label">Αρχείο BPMN</label>
-            <input type="file" class="form-control" id="bpmnFile" accept=".bpmn">
+            <input type="file" class="form-control" id="bpmnFile" name="bpmnFile" accept=".bpmn">
           </div>
           <div class="col-md-6">
             <label for="diagramSelect" class="form-label">Ή επιλέξτε αποθηκευμένο διάγραμμα</label>
-            <select id="diagramSelect" class="form-select"></select>
+            <select id="diagramSelect" name="diagramSelect" class="form-select"></select>
           </div>
 
           <div class="col-md-12 d-flex justify-content-end">
@@ -117,9 +117,7 @@
     <!-- Modeler -->
     <div id="tab-modeler" class="d-none position-relative">
       <div class="d-flex justify-content-between align-items-center bg-light border-bottom p-2">
-        <div>
-          <button id="saveBtn" class="btn btn-primary me-2">💾 Αποθήκευση</button>
-        </div>
+        
 
         <div class="d-flex gap-2 align-items-center">
           <button id="undoBtn" class="btn btn-outline-secondary btn-sm rounded-circle">&#x21ba;</button>
@@ -135,7 +133,7 @@
 
       <button id="paletteToggle" class="btn btn-outline-dark position-absolute" style="top: 10px; left: 50%; transform: translateX(-50%); z-index: 1100;">+</button>
       <div id="canvas" style="height: 85vh; border: 1px solid #ccc;"></div>
-      <select id="employeeSelect" class="form-select position-absolute d-none" style="width:200px; z-index:1000;"></select>
+      <select id="employeeSelect" name="employeeSelect" class="form-select position-absolute d-none" style="width:200px; z-index:1000;"></select>
       <button id="completeBtn" class="btn btn-success position-absolute d-none" style="z-index:1000;">Ολοκληρώθηκε</button>
 
       <div class="modal fade" id="chatModal" tabindex="-1">
@@ -147,7 +145,7 @@
             </div>
             <div class="modal-body">
               <div id="chatMessages" style="max-height:60vh; overflow-y:auto;"></div>
-              <textarea id="chatInput" class="form-control mt-2" rows="2" placeholder="Γράψε μήνυμα..."></textarea>
+              <textarea id="chatInput" name="chatInput" class="form-control mt-2" rows="2" placeholder="Γράψε μήνυμα..."></textarea>
             </div>
             <div class="modal-footer">
               <button id="sendChatBtn" class="btn btn-primary">Αποστολή</button>
@@ -166,19 +164,19 @@
         <form id="employeeForm" class="row g-3 mb-4">
           <div class="col-md-6">
             <label for="fullName" class="form-label">Ονοματεπώνυμο</label>
-            <input type="text" class="form-control" id="fullName" required>
+            <input type="text" class="form-control" id="fullName" name="fullName" required>
           </div>
           <div class="col-md-6">
             <label for="position" class="form-label">Θέση Εργασίας</label>
-            <input type="text" class="form-control" id="position" required>
+            <input type="text" class="form-control" id="position" name="position" required>
           </div>
           <div class="col-md-6">
             <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" required>
+            <input type="text" class="form-control" id="username" name="username" required>
           </div>
           <div class="col-md-6">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" required>
+            <input type="password" class="form-control" id="password" name="password" required>
           </div>
           <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-success">➕ Προσθήκη</button>
@@ -211,11 +209,11 @@
         <form id="groupForm" class="row g-3 mb-4">
           <div class="col-md-6">
             <label for="groupName" class="form-label">Όνομα Group</label>
-            <input type="text" class="form-control" id="groupName" required>
+            <input type="text" class="form-control" id="groupName" name="groupName" required>
           </div>
           <div class="col-md-6">
             <label for="memberSelect" class="form-label">Μέλη</label>
-            <select id="memberSelect" class="form-select" multiple required></select>
+            <select id="memberSelect" name="memberSelect" class="form-select" multiple required></select>
             <div class="form-text">Κρατήστε Ctrl για πολλαπλή επιλογή</div>
           </div>
           <div class="col-12 d-flex justify-content-end">
@@ -282,15 +280,15 @@
       <form id="objectiveForm" class="mb-4">
         <div class="row g-2">
           <div class="col-md-3">
-            <input type="text" class="form-control" id="objName" placeholder="Φόρμα" list="formOptions" required>
+            <input type="text" class="form-control" id="objName" name="objName" placeholder="Φόρμα" list="formOptions" required>
             <datalist id="formOptions"></datalist>
           </div>
           <div class="col-md-5">
-            <input type="text" class="form-control" id="objDesc" placeholder="Ερώτηση" list="questionOptions">
+            <input type="text" class="form-control" id="objDesc" name="objDesc" placeholder="Ερώτηση" list="questionOptions">
             <datalist id="questionOptions"></datalist>
           </div>
           <div class="col-md-2">
-            <input type="number" step="0.01" class="form-control" id="objTarget" placeholder="Στόχος" required>
+            <input type="number" step="0.01" class="form-control" id="objTarget" name="objTarget" placeholder="Στόχος" required>
             <small id="currentMeasurement" class="form-text"></small>
           </div>
           <div class="col-md-2">
@@ -312,8 +310,55 @@
     let groupList = [];
     const assigneeOverlays = {};
     const completionOverlays = {};
+    const qaModdle = {
+      name: 'QA',
+      uri: 'http://example.com/qa',
+      prefix: 'qa',
+      types: [
+        {
+          name: 'UserTask',
+          extends: ['bpmn:UserTask'],
+          properties: [{ name: 'completed', isAttr: true, type: 'Boolean' }]
+        }
+      ]
+    };
+    const camundaModdle = {
+      name: 'Camunda',
+      uri: 'http://camunda.org/schema/1.0/bpmn',
+      prefix: 'camunda',
+      xml: { tagAlias: 'lowerCase' },
+      types: [
+        {
+          name: 'UserTask',
+          extends: ['bpmn:UserTask'],
+          properties: [{ name: 'assignee', isAttr: true, type: 'String' }]
+        }
+      ]
+    };
     let activeTab = 'employee';
     let diagramName = null;
+
+        // αυτόματη αποθήκευση
+        let autoSaveTimeout;
+        async function autoSave() {
+          if (!diagramName) {
+            const name = prompt('Αποθήκευση ως:');
+            if (!name) return;
+            diagramName = name;
+          }
+          const result = await bpmnModeler.saveXML({ format: true });
+          const xml = result.xml;
+          await fetch('/api/bpmn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: diagramName, xml })
+          });
+        }
+
+        function scheduleAutoSave() {
+          clearTimeout(autoSaveTimeout);
+          autoSaveTimeout = setTimeout(autoSave, 1000);
+        }
 
     async function loadDiagrams() {
       const res = await fetch('/api/bpmn?published=true');
@@ -476,7 +521,10 @@
     async function initModelerTab() {
       if (bpmnModeler) return; // μην το ξαναφορτώνεις
 
-      bpmnModeler = new BpmnJS({ container: '#canvas' });
+      bpmnModeler = new BpmnJS({
+        container: '#canvas',
+        moddleExtensions: { qa: qaModdle, camunda: camundaModdle }
+      });
 
       const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
         <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -529,36 +577,9 @@
       document.getElementById('paletteToggle').addEventListener('click', () => {
         if (paletteEl) paletteEl.classList.toggle('hidden');
       });
-
-      // Αποθήκευση
-      document.getElementById('saveBtn').addEventListener('click', async () => {
-        const result = await bpmnModeler.saveXML({ format: true });
-        let xml = result.xml;
-        if (!xml.includes('xmlns:camunda') && xml.includes('camunda:assignee')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:camunda="http://camunda.org/schema/1.0/bpmn"');
-        }
-        if (!xml.includes('xmlns:qa') && xml.includes('qa:completed')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:qa="http://example.com/qa"');
-        }
-        if (!xml.includes('xmlns:qa') && xml.includes('qa:completed')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:qa="http://example.com/qa"');
-        }
-        if (!xml.includes('xmlns:qa') && xml.includes('qa:completed')) {
-          xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:qa="http://example.com/qa"');
-        }
-        const name = prompt('Αποθήκευση ως:', 'διάγραμμα');
-        if (!name) return;
-        const res = await fetch('/api/bpmn', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, xml })
-        });
-        if (res.ok) alert('✅ Αποθηκεύτηκε');
-        else alert('❌ Σφάλμα αποθήκευσης');
-      });
-
     
       const eventBus = bpmnModeler.get('eventBus');
+      eventBus.on('commandStack.changed', scheduleAutoSave);
       eventBus.on('element.click', e => {
         const element = e.element;
         if (element.type === 'bpmn:UserTask') {
@@ -598,36 +619,43 @@
       modeling.updateProperties(element, { 'qa:completed': true });
 
       updateCompletionOverlay(element);
-      updateProgressBar(); // ✅ νέο
 
       completeBtn.classList.add('d-none');
       select.classList.add('d-none');
 
       // Αποθήκευση
-      const result = await bpmnModeler.saveXML({ format: true });
-      let xml = result.xml;
-
-      if (!xml.includes('xmlns:qa') && xml.includes('qa:completed')) {
-        xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:qa="http://example.com/qa"');
+      const assignee = element.businessObject.get('camunda:assignee') || '';
+      try {
+        await fetch('/api/bpmn/assign-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ diagramName, taskId: element.id, assignee, completed: true })
+        });
+      } catch (err) {
+        console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
       }
 
-      const res = await fetch('/api/bpmn', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: diagramName, xml })
-      });
-
-      if (!res.ok) {
-        alert('❌ Σφάλμα αποθήκευσης');
-      }
+      await autoSave();
     };
 
 
-      select.onchange = () => {
+      select.onchange = async () => {
         if (select.value) {
           const modeling = bpmnModeler.get('modeling');
           modeling.updateProperties(element, { 'camunda:assignee': select.value });
           updateAssigneeOverlay(element);
+
+          try {
+            await fetch('/api/bpmn/assign-status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ diagramName, taskId: element.id, assignee: select.value, completed: element.businessObject.get('qa:completed') || false })
+            });
+          } catch (err) {
+            console.error('❌ Σφάλμα αποθήκευσης εκχώρησης', err);
+          }
+
+          await autoSave();
         }
         select.classList.add('d-none');
         document.getElementById('completeBtn').classList.add('d-none');
@@ -1160,6 +1188,8 @@
             console.log('XML LOADED:', xml);
             await bpmnModeler.importXML(xml);
             diagramName = bpmnName; // για χρήση π.χ. στο chat
+            renderAssigneeOverlays();
+            renderCompletionOverlays();
           } catch (err) {
             alert('❌ Σφάλμα φόρτωσης διαγράμματος');
             console.error(err);

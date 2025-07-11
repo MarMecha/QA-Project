@@ -375,7 +375,7 @@
     async function deleteDiagram(name) {
       if (!confirm('Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτό το διάγραμμα;')) return;
       const res = await fetch(`/api/bpmn/${encodeURIComponent(name)}`, { method: 'DELETE' });
-      if (res.ok) {
+      if (res.ok || res.status === 404) {
         loadDiagrams();
       } else {
         alert('❌ Αποτυχία διαγραφής');

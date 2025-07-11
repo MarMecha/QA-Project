@@ -2,8 +2,12 @@ package com.example.QA_Project.controller;
 
 import com.example.QA_Project.model.BpmnDiagram;
 import com.example.QA_Project.repository.BpmnDiagramRepository;
+import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.StringReader;
@@ -27,6 +31,9 @@ public class BpmnDiagramController {
 
     @Autowired
     private BpmnDiagramRepository repository;
+
+    @Autowired
+    private TaskAssignmentStatusRepository statusRepository;
 
     @PostMapping
     public ResponseEntity<?> saveDiagram(@RequestBody BpmnDiagram diagram) {
@@ -107,10 +114,12 @@ public class BpmnDiagramController {
     }
 
     @DeleteMapping("/{name}")
+    @Transactional
     public ResponseEntity<?> deleteDiagram(@PathVariable String name) {
         if (!repository.existsById(name)) {
             return ResponseEntity.notFound().build();
         }
+        statusRepository.deleteByDiagramName(name);
         repository.deleteById(name);
         return ResponseEntity.ok().build();
     }
