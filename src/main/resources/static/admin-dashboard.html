@@ -100,7 +100,7 @@
       <h2 class="mt-5">📂 Αποθηκευμένα BPMN Διαγράμματα</h2>
       <table class="table table-bordered mb-4">
         <thead>
-          <tr><th>Όνομα</th><th>Κατάσταση</th></tr>
+          <tr><th>Όνομα</th><th>Progress</th><th>Κατάσταση</th><th></th></tr>
         </thead>
         <tbody id="diagramList"></tbody>
       </table>
@@ -337,13 +337,19 @@
       const res = await fetch('/api/bpmn');
       const diagrams = await res.json();
       if (diagrams.length === 0) {
-        list.innerHTML = '<tr><td colspan="2" class="text-muted">Δεν υπάρχουν διαγράμματα.</td></tr>';
+        list.innerHTML = '<tr><td colspan="4" class="text-muted">Δεν υπάρχουν διαγράμματα.</td></tr>';
         return;
       }
       diagrams.slice().reverse().forEach(d => {
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
         nameCell.innerHTML = `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(d.name)}">${d.name}</a>`;
+        const progressCell = document.createElement('td');
+        const pct = d.userTaskCount ? Math.round((d.completedUserTaskCount / d.userTaskCount) * 100) : 0;
+        progressCell.innerHTML = `
+          <div class="progress" style="height:20px">
+            <div class="progress-bar" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">${pct}%</div>
+          </div>`;
         const actionCell = document.createElement('td');
         const btn = document.createElement('button');
         btn.className = 'btn btn-sm btn-outline-success';
@@ -357,6 +363,7 @@
         delBtn.onclick = () => deleteDiagram(d.name);
         deleteCell.appendChild(delBtn);
         row.appendChild(nameCell);
+        row.appendChild(progressCell);
         row.appendChild(actionCell);
         row.appendChild(deleteCell);
         list.appendChild(row);
