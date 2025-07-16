@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
+import com.example.QA_Project.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/bpmn")
@@ -16,6 +17,9 @@ public class TaskAssignmentStatusController {
 
     @Autowired
     private TaskAssignmentStatusRepository repository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @PostMapping("/assign-status")
     public ResponseEntity<?> saveStatus(@RequestBody TaskAssignmentStatus incoming) {
@@ -31,6 +35,10 @@ public class TaskAssignmentStatusController {
 
         repository.save(entity);
 
+        if (incoming.isCompleted()) {
+            notificationService.notifyTaskCompletion(entity);
+        }
+        
         return ResponseEntity.ok().body("✅ Αποθηκεύτηκε");
     }
 

@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import com.example.QA_Project.model.ProcessChatMessage;
 import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.AssignedProcess;
+import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.BpmnDiagramRepository;
 import com.example.QA_Project.repository.ProcessChatMessageRepository;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import com.example.QA_Project.repository.AssignedProcessRepository;
+import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
 
 @RestController
 @RequestMapping("/api")
@@ -32,6 +34,10 @@ public class NotificationController {
 
     @Autowired
     private AssignedProcessRepository assignedRepo;
+
+    @Autowired
+    private TaskAssignmentStatusRepository statusRepo;
+
 
     @GetMapping("/notifications")
     public ResponseEntity<List<Map<String, String>>> getNotifications(@RequestParam String user) {
@@ -60,6 +66,23 @@ public class NotificationController {
             map.put("message", "✅ Σας ανατέθηκε η διαδικασία: " + ap.getProcessName());
             map.put("diagram", ap.getBpmnFileName());
             notifications.add(map);
+        }
+
+        java.util.Set<String> diagrams = new java.util.HashSet<>();
+        groupAssignedRepo.findByMembersContaining(user).forEach(gp -> diagrams.add(gp.getBpmnFileName()));
+        assignedRepo.findByFullName(user).forEach(ap -> diagrams.add(ap.getBpmnFileName()));
+
+        for (String d : diagrams) {
+            statusRepo.findByDiagramName(d).stream()
+                .filter(TaskAssignmentStatus::isCompleted)
+                .forEach(st -> {
+                    Map<String, String> map = new HashMap<>();
+                    String who = st.getAssignee();
+                    map.put("message", "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
+                            " task στο διάγραμμα: " + d);
+                    map.put("diagram", d);
+                    notifications.add(map);
+                });
         }
 
         return ResponseEntity.ok(notifications);

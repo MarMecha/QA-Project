@@ -7,4 +7,6 @@ public interface AssignedProcessRepository extends JpaRepository<AssignedProcess
 
     // Retrieve all processes assigned to a specific employee
     java.util.List<AssignedProcess> findByFullName(String fullName);
+    
+    java.util.List<AssignedProcess> findByBpmnFileName(String bpmnFileName);
 }

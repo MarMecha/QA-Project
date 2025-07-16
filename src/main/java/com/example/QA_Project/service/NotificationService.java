@@ -3,7 +3,9 @@ package com.example.QA_Project.service;
 import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.ProcessChatMessage;
+import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
+import com.example.QA_Project.repository.AssignedProcessRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +15,14 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final GroupAssignedProcessRepository assignedRepo;
+    private final AssignedProcessRepository individualRepo;
 
-    public NotificationService(GroupAssignedProcessRepository assignedRepo) {
+    public NotificationService(GroupAssignedProcessRepository assignedRepo,
+                               AssignedProcessRepository individualRepo) {
         this.assignedRepo = assignedRepo;
+        this.individualRepo = individualRepo;
     }
+
 
     public void notifyParticipants(ProcessChatMessage message) {
         String processName = message.getname();
@@ -54,6 +60,24 @@ public class NotificationService {
         for (String member : membersArray) {
             System.out.println("📢 Ειδοποίηση νέας ανάθεσης στον " + member);
         }
+    }
+
+    public void notifyTaskCompletion(TaskAssignmentStatus status) {
+        System.out.println("📌 notifyTaskCompletion ΚΛΗΘΗΚΕ για διάγραμμα: " + status.getDiagramName());
+
+        // Ειδοποίηση σε μέλη group διαδικασιών
+        assignedRepo.findAll().stream()
+                .filter(p -> p.getBpmnFileName().equalsIgnoreCase(status.getDiagramName()))
+                .forEach(p -> {
+                    for (String member : p.getMembers().split(",\\s*")) {
+                        System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον " + member);
+                    }
+                });
+
+        // Ειδοποίηση σε ατομικές αναθέσεις
+        individualRepo.findByBpmnFileName(status.getDiagramName()).forEach(p -> {
+            System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον " + p.getFullName());
+        });
     }
 
 }

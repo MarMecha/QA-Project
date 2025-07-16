@@ -7,4 +7,6 @@ public interface GroupAssignedProcessRepository extends JpaRepository<GroupAssig
 
     // Find processes assigned to groups that contain a specific employee name
     java.util.List<GroupAssignedProcess> findByMembersContaining(String fullName);
+    
+    java.util.List<GroupAssignedProcess> findByBpmnFileName(String bpmnFileName);
 }

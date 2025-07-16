@@ -80,9 +80,11 @@
           </div>
 
           <div id="groupFields" class="row g-3 d-none">
-            <div class="col-md-6">
-              <label for="groupSelect" class="form-label">Όνομα Group Υπαλλήλων</label>
-              <select id="groupSelect" name="groupSelect" class="form-select"></select>
+            <div class="col-md-6 position-relative">
+              <label for="groupSearch" class="form-label">Όνομα Group Υπαλλήλων</label>
+              <input type="text" class="form-control" id="groupSearch" name="groupSearch" autocomplete="off" required>
+              <ul id="groupSuggestions" class="list-group d-none" style="position:absolute; z-index:1000; width:100%; background:#fff; border:1px solid #ccc;"></ul>
+              <input type="hidden" id="groupId" name="groupId">
             </div>
             <div class="col-md-6">
               <label for="groupMembers" class="form-label">Μέλη</label>
@@ -379,24 +381,16 @@
       employeeList = await res.json();
     }
 
-    async function loadGroups() {
+    async function loadAssignableGroups() {
       const res = await fetch('/api/groups');
       groupList = await res.json();
-      const select = document.getElementById('groupSelect');
-      if (!select) return;
-      select.innerHTML = '<option value="">-- Επιλογή --</option>';
-      groupList.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g.id;
-        opt.textContent = g.name;
-        select.appendChild(opt);
-      });
     }
 
     function updateGroupMembers() {
-      const select = document.getElementById('groupSelect');
-      const group = groupList.find(g => g.id == select.value);
+      const input = document.getElementById('groupSearch');
+      const group = groupList.find(g => g.name === input.value);
       document.getElementById('groupMembers').value = group ? group.members.map(m => m.fullName).join(', ') : '';
+      document.getElementById('groupId').value = group ? group.id : '';
     }
 
     function switchTab(tab) {
@@ -436,7 +430,44 @@
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('tabEmployee')?.addEventListener('click', () => switchTab('employee'));
       document.getElementById('tabGroup')?.addEventListener('click', () => switchTab('group'));
-      document.getElementById('groupSelect')?.addEventListener('change', updateGroupMembers);
+      document.getElementById('groupSearch')?.addEventListener('input', function () {
+        const input = this.value.toLowerCase();
+        const suggestions = document.getElementById('groupSuggestions');
+        suggestions.innerHTML = '';
+
+        if (!input) {
+          suggestions.classList.add('d-none');
+          updateGroupMembers();
+          return;
+        }
+
+        const matches = groupList.filter(g => g.name.toLowerCase().includes(input));
+        if (matches.length === 0) {
+          suggestions.classList.add('d-none');
+          return;
+        }
+
+        matches.forEach(g => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = g.name;
+          li.addEventListener('click', () => {
+            document.getElementById('groupSearch').value = g.name;
+            document.getElementById('groupId').value = g.id;
+            document.getElementById('groupMembers').value = g.members.map(m => m.fullName).join(', ');
+            suggestions.classList.add('d-none');
+          });
+          suggestions.appendChild(li);
+        });
+
+        suggestions.classList.remove('d-none');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!document.getElementById('groupSearch')?.contains(e.target)) {
+          document.getElementById('groupSuggestions')?.classList.add('d-none');
+        }
+      });
 
       document.getElementById('employeeName')?.addEventListener('input', function () {
         const input = this.value.toLowerCase();
@@ -491,7 +522,7 @@
           formData.append('employeePosition', document.getElementById('employeePosition').value);
           url = '/api/qa/assign';
         } else {
-          formData.append('groupId', document.getElementById('groupSelect').value);
+          formData.append('groupId', document.getElementById('groupId').value);
           url = '/api/qa/assign-group';
         }
 
@@ -510,7 +541,7 @@
       });
 
       loadEmployees();
-      loadGroups();
+      loadAssignableGroups();
       loadDiagrams();
     });
 
@@ -611,32 +642,36 @@
       select.classList.remove('d-none');
 
       const completeBtn = document.getElementById('completeBtn');
+      completeBtn.textContent = element.businessObject.get('qa:completed')
+        ? 'Μη ολοκληρωμένο'
+        : 'Ολοκληρώθηκε';
       completeBtn.style.left = (evt.pageX + 210) + 'px';
       completeBtn.style.top  = evt.pageY + 'px';
       completeBtn.classList.remove('d-none');
       completeBtn.onclick = async () => {
-      const modeling = bpmnModeler.get('modeling');
-      modeling.updateProperties(element, { 'qa:completed': true });
+        const modeling = bpmnModeler.get('modeling');
+        const currently = element.businessObject.get('qa:completed');
+        modeling.updateProperties(element, { 'qa:completed': !currently });
 
-      updateCompletionOverlay(element);
+        updateCompletionOverlay(element);
 
-      completeBtn.classList.add('d-none');
-      select.classList.add('d-none');
+        completeBtn.classList.add('d-none');
+        select.classList.add('d-none');
 
       // Αποθήκευση
-      const assignee = element.businessObject.get('camunda:assignee') || '';
-      try {
-        await fetch('/api/bpmn/assign-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ diagramName, taskId: element.id, assignee, completed: true })
-        });
-      } catch (err) {
-        console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
-      }
+        const assignee = element.businessObject.get('camunda:assignee') || '';
+        try {
+          await fetch('/api/bpmn/assign-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diagramName, taskId: element.id, assignee, completed: !currently })
+          });
+        } catch (err) {
+          console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
+        }
 
-      await autoSave();
-    };
+        await autoSave();
+      };
 
 
       select.onchange = async () => {
@@ -872,7 +907,7 @@
       });
     }
 
-    async function loadGroups() {
+    async function loadQaGroups() {
       const res = await fetch('/api/qa/group-all');
       groupData = await res.json();
       const table = document.getElementById('qaGroupTable');
@@ -943,7 +978,7 @@
 
     function loadAll() {
       loadIndividual();
-      loadGroups();
+      loadQaGroups();
     }
 
     // --- Διαχείριση Ποιοτικών Στόχων --- //

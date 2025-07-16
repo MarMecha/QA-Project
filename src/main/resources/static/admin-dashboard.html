@@ -163,6 +163,28 @@
   </div>
 
 
+  <!-- Edit Form Modal -->
+  <div class="modal fade" id="editFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Επεξεργασία Φόρμας</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="modalFormTitle" class="form-label">Τίτλος Φόρμας</label>
+            <input type="text" id="modalFormTitle" class="form-control">
+          </div>
+          <div id="modalQuestionList"></div>
+          <div class="d-flex justify-content-between mt-3">
+            <button type="button" class="btn btn-outline-primary" id="modalAddQuestion">➕ Πρόσθηκη Ερώτησης</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -232,13 +254,67 @@
       }
     });
 
+    let formModal;
+    let editingFormActive = false;
+    let modalQuestionCounter = 0;
+
+    function addModalQuestion(text = '') {
+      const container = document.getElementById('modalQuestionList');
+      const div = document.createElement('div');
+      div.className = 'mb-3';
+      div.id = `modal_q${modalQuestionCounter}`;
+      div.innerHTML = `
+        <label class="form-label">Ερώτηση #${modalQuestionCounter + 1}</label>
+        <input type="text" class="form-control mb-2" value="${text}">
+        <button type="button" class="btn btn-sm btn-outline-danger">❌ Αφαίρεση</button>
+      `;
+      const input = div.querySelector('input');
+      input.addEventListener('input', scheduleFormSave);
+      div.querySelector('button').onclick = () => {
+        div.remove();
+        renumberModalQuestions();
+        scheduleFormSave();
+      };
+      container.appendChild(div);
+      modalQuestionCounter++;
+    }
+
+    function renumberModalQuestions() {
+      const items = document.querySelectorAll('#modalQuestionList > div');
+      items.forEach((el, idx) => {
+        const label = el.querySelector('label');
+        if (label) label.textContent = `Ερώτηση #${idx + 1}`;
+      });
+    }
+
+    let formSaveTimeout;
+    async function autoSaveForm() {
+      if (!editingFormId) return;
+      const title = document.getElementById('modalFormTitle').value.trim();
+      const questions = Array.from(document.querySelectorAll('#modalQuestionList input'))
+        .map(i => i.value.trim()).filter(t => t.length > 0);
+      await fetch(`${BASE_URL}/${editingFormId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, questions, active: editingFormActive })
+      });
+      loadSavedForms();
+    }
+
+    function scheduleFormSave() {
+      clearTimeout(formSaveTimeout);
+      formSaveTimeout = setTimeout(autoSaveForm, 1000);
+    }
+
     function openEditForm(form) {
-      const container = document.getElementById('questionList');
-      document.getElementById('formTitleInput').value = form.title || '';
-      container.innerHTML = '';
-      questionCounter = 0;
       editingFormId = form.id;
-      form.questions.forEach(q => addQuestion(q));
+      editingFormActive = form.active;
+      modalQuestionCounter = 0;
+      document.getElementById('modalFormTitle').value = form.title || '';
+      const container = document.getElementById('modalQuestionList');
+      container.innerHTML = '';
+      form.questions.forEach(q => addModalQuestion(q));
+      formModal.show();
     }
 
     async function toggleActivation(id) {
@@ -459,6 +535,15 @@
 
 
     window.addEventListener('DOMContentLoaded', () => {
+      formModal = new bootstrap.Modal(document.getElementById('editFormModal'));
+      document.getElementById('modalAddQuestion').addEventListener('click', () => {
+        addModalQuestion();
+        scheduleFormSave();
+      });
+      document.getElementById('modalFormTitle').addEventListener('input', scheduleFormSave);
+      document.getElementById('editFormModal').addEventListener('hidden.bs.modal', () => {
+        editingFormId = null;
+      });
       addQuestion();
       loadDiagrams();
       loadSavedForms();
