@@ -22,6 +22,7 @@
         <button class="btn btn-sidebar" onclick="showTab('forms')">Ερωτηματολόγια</button>
         <button class="btn btn-sidebar" onclick="showTab('employees')">Υπάλληλοι</button>
         <button class="btn btn-sidebar" onclick="showTab('groups')">Ομάδες</button>
+        <button class="btn btn-sidebar" onclick="showTab('history')">Ιστορικό</button>
       </div>
     </div>
   </nav>
@@ -121,6 +122,12 @@
       </form>
       <hr class="my-5">
       <h2 class="mb-3">📄 Αποθηκευμένες Φόρμες</h2>
+      <div id="yearFilterContainer" class="mb-3 d-none">
+        <label for="yearFilter" class="form-label">Φιλτράρισμα κατά έτος</label>
+        <select id="yearFilter" class="form-select" style="max-width: 200px;">
+          <option value="all">Όλα</option>
+        </select>
+      </div>
       <ul class="list-group" id="savedFormsList"></ul>
 
       <h2 class="mt-5">📊 Αποτελέσματα Αξιολόγησης Ενεργών Φορμών</h2>
@@ -185,6 +192,11 @@
     </div>
   </div>
 
+  <div id="tab-history" class="d-none">
+    <h2 class="mt-5">Περσινά Ερωτηματολόγια</h2>
+    <div id="historyForms" class="accordion mt-3"></div>
+  </div>
+
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -196,10 +208,12 @@
       document.getElementById('tab-employees')?.classList.toggle('d-none', tab !== 'employees');
       document.getElementById('tab-groups')?.classList.toggle('d-none', tab !== 'groups');
       document.getElementById('tab-processes')?.classList.toggle('d-none', tab !== 'processes');
+      document.getElementById('tab-history').classList.toggle('d-none', tab !== 'history');
 
       if (tab === 'employees') fetchEmployeesOnly();
       if (tab === 'groups') fetchGroupsOnly();
       if (tab === 'processes') fetchProcessesOnly();
+      if (tab === 'history') loadHistoryForms();
     }
 
     const BASE_URL = 'http://localhost:8080/api/forms';
@@ -370,41 +384,189 @@
     }
 
 
-    async function loadSavedForms() {
-      const res = await fetch(BASE_URL);
-      if (!res.ok) return;
-      const forms = await res.json();
-      const list = document.getElementById('savedFormsList');
-      list.innerHTML = '';
+      async function loadSavedForms() {
+        const res = await fetch(BASE_URL);
+        if (!res.ok) return;
+        const forms = await res.json();
+        const list = document.getElementById('savedFormsList');
+        list.innerHTML = '';
+        if (!Array.isArray(forms) || forms.length === 0) {
+          list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν αποθηκευμένες φόρμες.</li>';
+          return;
+        }
+        const thisYear = new Date().getFullYear();
+        const lastYear = thisYear - 1;
+        const currentForms = [];
+        const lastForms = [];
+        const olderForms = [];
+        forms.forEach(f => {
+          const year = f.createdAt ? new Date(f.createdAt).getFullYear() : null;
+          if (year === thisYear) currentForms.push(f);
+          else if (year === lastYear) lastForms.push(f);
+          else olderForms.push(f);
+        });
+
+        function createItem(form, isPast = false) {
+          const item = document.createElement('li');
+          item.className = 'list-group-item';
+          item.style.border = '1px solid #dee2e6'; // αρχικό border
+
+          const header = document.createElement('div');
+          header.className = 'd-flex justify-content-between align-items-center';
+
+          const label = document.createElement('span');
+          label.textContent = `📄 ${form.title || 'Χωρίς τίτλο'}`;
+          label.style.cursor = 'pointer';
+
+          if (isPast) {
+            label.onclick = async () => {
+              const existingList = item.querySelector('ul');
+
+              if (existingList) {
+                existingList.parentElement.remove(); // Collapse
+                item.classList.remove('border-primary');
+                item.style.border = '1px solid #dee2e6'; // default border
+                return;
+              }
+
+              const res = await fetch(`/api/responses/averages/${form.id}`);
+              const averages = res.ok ? await res.json() : {};
+
+              const questionsHtml = (form.questions || []).map(q => {
+                const score = averages[q];
+                return `
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${q}
+                    <span class="badge ${typeof score === 'number' ? 'bg-primary' : 'bg-secondary'}">
+                      ${typeof score === 'number' ? score : '–'}
+                    </span>
+                  </li>`;
+              }).join('');
+
+              const wrapper = document.createElement('div');
+              wrapper.className = 'mt-3';
+              wrapper.innerHTML = `<ul class="list-group list-group-flush mt-2">${questionsHtml}</ul>`;
+              item.appendChild(wrapper);
+
+              item.classList.add('border-primary');
+              item.style.border = '2px solid #0d6efd'; // blue border
+            };
+          } else {
+            label.onclick = () => openEditForm(form);
+          }
+
+          const buttons = document.createElement('div');
+
+          if (!isPast) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn btn-sm me-2 ' + (form.active ? 'btn-success' : 'btn-secondary');
+            toggleBtn.textContent = form.active ? 'Ενεργή' : 'Ανενεργή';
+            toggleBtn.onclick = () => toggleActivation(form.id);
+            buttons.appendChild(toggleBtn);
+          }
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn btn-sm btn-outline-danger';
+          deleteBtn.textContent = 'Διαγραφή';
+          deleteBtn.onclick = () => deleteForm(form.id);
+          buttons.appendChild(deleteBtn);
+
+          header.appendChild(label);
+          header.appendChild(buttons);
+          item.appendChild(header);
+          list.appendChild(item);
+        }
+
+
+        function appendGroup(title, arr) {
+          if (arr.length === 0) return;
+          const headerItem = document.createElement('li');
+          headerItem.className = 'list-group-item list-group-item-secondary';
+          headerItem.textContent = title;
+          list.appendChild(headerItem);
+          arr.forEach(f => createItem(f, f._isPast));
+        }
+
+        appendGroup('Φετινές', currentForms.map(f => ({ ...f, _isPast: false })));
+        appendGroup('Πέρσινες', lastForms.map(f => ({ ...f, _isPast: true })));
+        appendGroup('Παλαιότερες', olderForms.map(f => ({ ...f, _isPast: true })));
+      }
+
+    async function loadHistoryForms() {
+      const container = document.getElementById('historyForms');
+      container.innerHTML = '';
+      const [histRes, currentRes] = await Promise.all([
+        fetch(`${BASE_URL}/history`),
+        fetch(`${BASE_URL}/current`)
+      ]);
+      if (!histRes.ok) return;
+      const forms = await histRes.json();
+      const currentForms = currentRes.ok ? await currentRes.json() : [];
+      const currentMap = {};
+      currentForms.forEach(f => { currentMap[f.title] = f; });
       if (!Array.isArray(forms) || forms.length === 0) {
-        list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν αποθηκευμένες φόρμες.</li>';
+        container.innerHTML = '<div class="text-muted">Δεν βρέθηκαν περσινά ερωτηματολόγια.</div>';
         return;
       }
-      forms.forEach(form => {
-        const item = document.createElement('li');
-        item.className = 'list-group-item';
-        const header = document.createElement('div');
-        header.className = 'd-flex justify-content-between align-items-center';
-        const label = document.createElement('span');
-        label.textContent = `📄 ${form.title || 'Χωρίς τίτλο'}`;
-        label.style.cursor = 'pointer';
-        label.onclick = () => openEditForm(form);
-        const buttons = document.createElement('div');
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'btn btn-sm me-2 ' + (form.active ? 'btn-success' : 'btn-secondary');
-        toggleBtn.textContent = form.active ? 'Ενεργή' : 'Ανενεργή';
-        toggleBtn.onclick = () => toggleActivation(form.id);
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn btn-sm btn-outline-danger';
-        deleteBtn.textContent = 'Διαγραφή';
-        deleteBtn.onclick = () => deleteForm(form.id);
-        buttons.appendChild(toggleBtn);
-        buttons.appendChild(deleteBtn);
-        header.appendChild(label);
-        header.appendChild(buttons);
-        item.appendChild(header);
-        list.appendChild(item);
-      });
+      for (const form of forms) {
+        const avgRes = await fetch(`/api/responses/averages/${form.id}`);
+        const averages = avgRes.ok ? await avgRes.json() : {};
+        let currentAverages = {};
+        const current = currentMap[form.title];
+        if (current) {
+          const curRes = await fetch(`/api/responses/averages/${current.id}`);
+          currentAverages = curRes.ok ? await curRes.json() : {};
+        }
+        const questionsRows = (form.questions || []).map(q => {
+          const last = averages[q];
+          const curr = currentAverages[q];
+          let diffMarkup = '<span class="badge bg-secondary">-</span>';
+          if (typeof last === 'number' && typeof curr === 'number') {
+            const diff = +(curr - last).toFixed(2);
+            const color = diff > 0 ? 'bg-success' : diff < 0 ? 'bg-danger' : 'bg-secondary';
+            const sign = diff > 0 ? '+' : '';
+            diffMarkup = `<span class="badge ${color}">${sign}${diff}</span>`;
+          }
+          const currMarkup = typeof curr === 'number'
+              ? `<span class="badge bg-warning text-dark">${curr}</span>`
+              : '-';
+            const lastMarkup = typeof last === 'number'
+              ? `<span class="badge bg-primary">${last}</span>`
+              : '-';
+          return `
+          <tr>
+            <td>${q}</td>
+            <td class="text-center">${currMarkup}</td>
+            <td class="text-center">${lastMarkup}</td>
+            <td class="text-center">${diffMarkup}</td>
+          </tr>`;
+        }).join('');
+        container.innerHTML += `
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="historyHeading${form.id}">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#historyCollapse${form.id}" aria-expanded="false" aria-controls="historyCollapse${form.id}">
+                ${form.title}
+              </button>
+            </h2>
+            <div id="historyCollapse${form.id}" class="accordion-collapse collapse" aria-labelledby="historyHeading${form.id}" data-bs-parent="#historyForms">
+              <div class="accordion-body p-0">
+                <table class="table table-bordered mb-0">
+                  <thead>
+                    <tr>
+                      <th>Ερώτηση</th>
+                      <th class="text-center">Φετινά</th>
+                      <th class="text-center">Περσινά</th>
+                      <th class="text-center">Διαφορά</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${questionsRows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      }
     }
 
     async function loadDiagrams() {
@@ -551,7 +713,7 @@
 
       // ➤ Άνοιξε το tab από το URL hash, αλλιώς δείξε το default (π.χ. 'diagrams')
       const tabFromHash = location.hash?.substring(1);
-      const availableTabs = ['diagrams', 'forms', 'employees', 'groups', 'processes'];
+      const availableTabs = ['diagrams', 'forms', 'history', 'employees', 'groups', 'processes'];
       if (availableTabs.includes(tabFromHash)) {
         showTab(tabFromHash);
       } else {

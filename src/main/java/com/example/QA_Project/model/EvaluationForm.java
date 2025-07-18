@@ -1,6 +1,8 @@
 package com.example.QA_Project.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -16,6 +18,9 @@ public class EvaluationForm {
     @ElementCollection
     private List<String> questions;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     @Column(nullable = false)
     private Boolean active = false; // ✅ προσθέτουμε αυτό
 
@@ -29,6 +34,16 @@ public class EvaluationForm {
     public List<String> getQuestions() { return questions; }
     public void setQuestions(List<String> questions) { this.questions = questions; }
 
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
     public Boolean isActive() { return active; }           // ✅ getter
     public void setActive(Boolean active) { this.active = active; } // ✅ setter
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

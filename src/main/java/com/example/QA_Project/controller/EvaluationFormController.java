@@ -5,6 +5,8 @@ import com.example.QA_Project.repository.EvaluationFormRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,22 @@ public class EvaluationFormController {
     @GetMapping
     public List<EvaluationForm> getAllForms() {
         return repository.findAll();
+    }
+
+    @GetMapping("/history")
+    public List<EvaluationForm> getLastYearForms() {
+        int lastYear = LocalDate.now().getYear() - 1;
+        LocalDateTime start = LocalDate.of(lastYear, 1, 1).atStartOfDay();
+        LocalDateTime end = LocalDate.of(lastYear, 12, 31).atTime(23, 59, 59);
+        return repository.findByCreatedAtBetweenOrderByCreatedAtAsc(start, end);
+    }
+
+    @GetMapping("/current")
+    public List<EvaluationForm> getCurrentYearForms() {
+        int year = LocalDate.now().getYear();
+        LocalDateTime start = LocalDate.of(year, 1, 1).atStartOfDay();
+        LocalDateTime end = LocalDate.of(year, 12, 31).atTime(23, 59, 59);
+        return repository.findByCreatedAtBetweenOrderByCreatedAtAsc(start, end);
     }
 
     @GetMapping("/{id}")
