@@ -10,7 +10,7 @@ public interface ProcessChatMessageRepository extends JpaRepository<ProcessChatM
     List<ProcessChatMessage> findBynameOrderBySentAtAsc(String name);
 
     @Query("SELECT m FROM ProcessChatMessage m WHERE m.sender <> :user AND m.name IN (" +
-           "SELECT p.processName FROM GroupAssignedProcess p WHERE p.members LIKE %:user%) " +
+           "SELECT p.processName FROM GroupAssignedProcess p WHERE p.members LIKE CONCAT('%', :user, '%')) " +
            "ORDER BY m.sentAt DESC")
     List<ProcessChatMessage> findRecentMessagesForUser(String user);
 }

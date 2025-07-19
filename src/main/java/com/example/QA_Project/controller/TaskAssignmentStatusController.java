@@ -27,23 +27,41 @@ public class TaskAssignmentStatusController {
             incoming.getDiagramName(), incoming.getTaskId()
         );
 
-        TaskAssignmentStatus entity = existingOpt.orElse(new TaskAssignmentStatus());
-        entity.setDiagramName(incoming.getDiagramName());
-        entity.setTaskId(incoming.getTaskId());
+        boolean wasCompleted = false;
+
+        TaskAssignmentStatus entity;
+
+        if (existingOpt.isPresent()) {
+            entity = existingOpt.get();
+            wasCompleted = entity.isCompleted();
+        } else {
+            entity = new TaskAssignmentStatus();
+            entity.setDiagramName(incoming.getDiagramName());
+            entity.setTaskId(incoming.getTaskId());
+        }
+
         entity.setAssignee(incoming.getAssignee());
         entity.setCompleted(incoming.isCompleted());
+        entity.setUpdatedAt(java.time.LocalDateTime.now());
 
         repository.save(entity);
 
-        if (incoming.isCompleted()) {
+        boolean nowCompleted = entity.isCompleted();
+
+        // DEBUG LOGGING (προσωρινό)
+        System.out.println("🔁 wasCompleted: " + wasCompleted);
+        System.out.println("🔁 nowCompleted: " + nowCompleted);
+
+        if (!wasCompleted && nowCompleted) {
             notificationService.notifyTaskCompletion(entity);
         }
-        
+
         return ResponseEntity.ok().body("✅ Αποθηκεύτηκε");
     }
 
+
     @GetMapping("/assign-status/{diagramName}")
     public ResponseEntity<List<TaskAssignmentStatus>> getStatus(@PathVariable String diagramName) {
-        return ResponseEntity.ok(repository.findByDiagramName(diagramName));
+        return ResponseEntity.ok(repository.findByDiagramNameOrderByUpdatedAtDesc(diagramName));
     }
 }

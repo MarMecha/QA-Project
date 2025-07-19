@@ -8,6 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/Admin_dashboard.css" />
   <link rel="stylesheet" href="css/Edit_dashboard.css" />
+  <link rel="stylesheet" href="css/notifications.css" />
   <!-- BPMN Styles -->
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/bpmn-font/css/bpmn.css" />
@@ -28,27 +29,23 @@
         <a href="admin-dashboard.html" class="btn btn-sidebar" >
           Home
         </a>
-        <button class="btn btn-sidebar" onclick="showTab('assign')">
-          Ανάθεση QA Διαδικασίας
-        </button>
-        <button class="btn btn-sidebar" onclick="showTab('modeler')">
-          Νέο Σχεδιάγραμμα
-        </button>
-        <button class="btn btn-sidebar" onclick="showTab('employees')">
-          Διαχείριση Υπαλλήλων
-        </button>
-        <button class="btn btn-sidebar" onclick="showTab('groups')">
-          Διαχείριση Ομάδων
-        </button>
-        <button class="btn btn-sidebar" onclick="showTab('qa')">
-          Διαχείριση QA Διαδικασιών
-        </button>
-        <button class="btn btn-sidebar" onclick="showTab('quality')">
-          Διαχείριση Ποιοτικών Στόχων
-        </button>
+        <button class="btn btn-sidebar" onclick="showTab('assign')">Ανάθεση QA Διαδικασίας</button>
+        <button class="btn btn-sidebar" onclick="showTab('modeler')">Νέο Σχεδιάγραμμα</button>
+        <button class="btn btn-sidebar" onclick="showTab('employees')">Διαχείριση Υπαλλήλων</button>
+        <button class="btn btn-sidebar" onclick="showTab('groups')">Διαχείριση Ομάδων</button>
+        <button class="btn btn-sidebar" onclick="showTab('qa')">Διαχείριση QA Διαδικασιών</button>
+        <button class="btn btn-sidebar" onclick="showTab('quality')">Διαχείριση Ποιοτικών Στόχων</button>
       </div>
     </div>
+    <button class="navbar-bell ms-auto" onclick="toggleNotifications()">🔔</button>
   </nav>
+
+  <div class="notif-panel" id="notifPanel">
+    <h5>📢 Ειδοποιήσεις</h5>
+    <div id="notification-list">
+      <p class="text-muted">Φόρτωση...</p>
+    </div>
+  </div>
 
   <!-- Περιεχόμενο Κεντρικό -->
   <div class="container py-4">
@@ -1200,7 +1197,6 @@
       paletteToggle.style.display = 'inline-block'; // ή 'block' αν ήταν block αρχικά
     });
 
-
     // Προεπιλεγμένη καρτέλα
     window.addEventListener('DOMContentLoaded', () => {
       const hash = window.location.hash.substring(1); // π.χ. modeler&name=example.bpmn
@@ -1234,5 +1230,6 @@
     });
 
   </script>
+  <script src="js/notifications.js"></script>
 </body>
 </html>

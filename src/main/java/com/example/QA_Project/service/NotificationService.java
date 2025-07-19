@@ -78,6 +78,9 @@ public class NotificationService {
         individualRepo.findByBpmnFileName(status.getDiagramName()).forEach(p -> {
             System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον " + p.getFullName());
         });
+        
+        // Ειδοποίηση στον QA-expert για κάθε ολοκλήρωση task
+        System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον QA-expert");
     }
 
 }

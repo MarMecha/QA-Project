@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/bpmn-js@11.5.0/dist/bpmn-modeler.development.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@11.5.0/dist/assets/bpmn-font/css/bpmn.css" />
+  <link rel="stylesheet" href="css/Edit_dashboard.css" />
 
   <style>
     html, body { height: 100%; margin: 0; font-family: sans-serif; }
@@ -20,7 +21,6 @@
       background-size: 30px 30px;
     }
 
-    #employeeSelect { z-index: 1000; }
     .hidden         { display: none !important; }
 
     #paletteToggle {
@@ -59,14 +59,9 @@
 <body>
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center bg-light border-bottom p-2">
-    <div>
-      <button id="saveBtn"    class="btn btn-primary me-2">💾 Αποθήκευση</button>
-      <button id="publishBtn" class="btn btn-outline-success me-2">Publish</button>
-      <span   id="publishTick" class="text-success d-none">✅</span>
-    </div>
+    <div></div>
 
     <div class="d-flex gap-2 align-items-center">
-      <a href="admin-dashboard.html#diagramList" class="btn btn-outline-secondary">🗂 Διαγράμματα</a>
       <button id="closeBtn"  class="btn btn-secondary">Κλείσε</button>
 
       <div id="historyControls" class="d-flex align-items-center ms-3 gap-1">
@@ -99,15 +94,36 @@
     </div>
   </div>
 
-  <!-- Popup επιλογής υπαλλήλου -->
-  <select id="employeeSelect" class="form-select position-absolute d-none" style="width:200px;"></select>
+  <!-- Κουμπί ολοκλήρωσης task -->
+  <button id="completeBtn" class="btn btn-success position-absolute d-none" style="z-index:1000;">Ολοκληρώθηκε</button>
 
   <!-- JavaScript -->
   <script>
-    const bpmnModeler = new BpmnJS({ container: '#canvas' });
+    const assigneeOverlays = {};
+    const completionOverlays = {};
+    const qaModdle = {
+      name: 'QA',
+      uri: 'http://example.com/qa',
+      prefix: 'qa',
+      types: [
+        { name: 'UserTask', extends: ['bpmn:UserTask'], properties: [{ name: 'completed', isAttr: true, type: 'Boolean' }] }
+      ]
+    };
+    const camundaModdle = {
+      name: 'Camunda',
+      uri: 'http://camunda.org/schema/1.0/bpmn',
+      prefix: 'camunda',
+      xml: { tagAlias: 'lowerCase' },
+      types: [
+        { name: 'UserTask', extends: ['bpmn:UserTask'], properties: [{ name: 'assignee', isAttr: true, type: 'String' }] }
+      ]
+    };
 
-    let employees   = [];
-    let published   = false;
+    const bpmnModeler = new BpmnJS({
+      container: '#canvas',
+      moddleExtensions: { qa: qaModdle, camunda: camundaModdle }
+    });
+
     let diagramName = new URLSearchParams(window.location.search).get('name') || null;
 
     const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
@@ -133,17 +149,10 @@
         const res = await fetch(`/api/bpmn/${diagramName}`);
         if (res.ok) {
           const data = await res.json();
-          published = data.published;
-          updatePublishUI();
           return bpmnModeler.importXML(data.xml);
         }
       }
       return bpmnModeler.importXML(emptyDiagram);
-    }
-
-    async function loadEmployees() {
-      const res = await fetch('/api/employees');
-      employees = await res.json();
     }
 
     async function loadChatMessages(name) {
@@ -166,102 +175,117 @@
       }
     }
 
-    async function saveDiagram(promptForName = true) {
-      let name = diagramName;
-      if (!name && promptForName) {
-        name = prompt('Αποθήκευση ως:');
-      }
-      if (!name) return null;
-
+    let autoSaveTimeout;
+    async function autoSave() {
+      if (!diagramName) return;
       const result = await bpmnModeler.saveXML({ format: true });
       let xml = result.xml;
-
       if (!xml.includes('xmlns:camunda') && xml.includes('camunda:assignee')) {
         xml = xml.replace('<bpmn:definitions', '<bpmn:definitions xmlns:camunda="http://camunda.org/schema/1.0/bpmn"');
       }
-
-      const res = await fetch('/api/bpmn', {
+      await fetch('/api/bpmn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, xml })
+        body: JSON.stringify({ name: diagramName, xml })
       });
-
-      if (res.ok) {
-        alert('✅ Αποθηκεύτηκε επιτυχώς!');
-        diagramName = name;
-        return name;
-      }
-
-      alert('❌ Αποτυχία αποθήκευσης');
-      return null;
     }
 
-    async function togglePublish() {
-      const name = await saveDiagram(!diagramName);
-      if (!name) return;
+    function scheduleAutoSave() {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(autoSave, 1000);
+    }
 
-      try {
-        const res = await fetch(`/api/bpmn/${encodeURIComponent(name)}/toggle`, { method: 'PUT' });
-        if (!res.ok) throw new Error(await res.text());
+    function updateAssigneeOverlay(element) {
+      const overlays = bpmnModeler.get('overlays');
+      const existing = assigneeOverlays[element.id];
+      if (existing) overlays.remove(existing);
 
-        const data = await res.json();
-        published = data.published;
-        updatePublishUI();
-      } catch (err) {
-        console.error('❌ Σφάλμα δημοσίευσης:', err);
-        alert('❌ Σφάλμα δημοσίευσης');
+      const assignee = element.businessObject.get('camunda:assignee');
+      if (assignee) {
+        const div = document.createElement('div');
+        div.className = 'assignee-label';
+        div.textContent = assignee;
+        const id = overlays.add(element, {
+          position: { bottom: 2, right: 2 },
+          html: div
+        });
+        assigneeOverlays[element.id] = id;
       }
     }
 
-    function updatePublishUI() {
-      const btn  = document.getElementById('publishBtn');
-      const tick = document.getElementById('publishTick');
-      if (published) {
-        btn.textContent = 'Un-Publish';
-        tick.classList.remove('d-none');
-      } else {
-        btn.textContent = 'Publish';
-        tick.classList.add('d-none');
+    function renderAssigneeOverlays() {
+      const registry = bpmnModeler.get('elementRegistry');
+      registry.filter(e => e.type === 'bpmn:UserTask').forEach(updateAssigneeOverlay);
+    }
+
+    function updateCompletionOverlay(element) {
+      const overlays = bpmnModeler.get('overlays');
+      const existing = completionOverlays[element.id];
+      if (existing) overlays.remove(existing);
+
+      const completed = element.businessObject.get('qa:completed');
+      if (completed) {
+        const div = document.createElement('div');
+        div.className = 'completed-label';
+        div.textContent = '✓ Ολοκληρώθηκε';
+        const id = overlays.add(element, {
+          position: { top: -10, right: 2 },
+          html: div
+        });
+        completionOverlays[element.id] = id;
       }
     }
 
-    function showEmployeeSelect(element, evt) {
-      const select = document.getElementById('employeeSelect');
-      select.innerHTML = '<option value="">-- Εκχώρηση --</option>';
+    function renderCompletionOverlays() {
+      const registry = bpmnModeler.get('elementRegistry');
+      registry.filter(e => e.type === 'bpmn:UserTask').forEach(updateCompletionOverlay);
+    }
 
-      employees.forEach(emp => {
-        const opt = document.createElement('option');
-        opt.value = emp.fullName;
-        opt.textContent = emp.fullName;
-        select.appendChild(opt);
-      });
-
-      select.style.left = evt.pageX + 'px';
-      select.style.top  = evt.pageY + 'px';
-      select.classList.remove('d-none');
-
-      select.onchange = () => {
-        if (select.value) {
-          const modeling = bpmnModeler.get('modeling');
-          modeling.updateProperties(element, { 'camunda:assignee': select.value });
+    function showCompleteBtn(element, evt) {
+      const currentUser = localStorage.getItem('employeeName');
+      const assignee = element.businessObject.get('camunda:assignee');
+      if (assignee !== currentUser) {
+        hideCompleteBtn();
+        return;
+      }
+      const btn = document.getElementById('completeBtn');
+      btn.textContent = element.businessObject.get('qa:completed') ? 'Μη ολοκληρωμένο' : 'Ολοκληρώθηκε';
+      btn.style.left = evt.pageX + 'px';
+      btn.style.top  = evt.pageY + 'px';
+      btn.classList.remove('d-none');
+      btn.onclick = async () => {
+        const modeling = bpmnModeler.get('modeling');
+        const prev = element.businessObject.get('qa:completed');
+        const newVal = !(prev === true || prev === 'true');
+        modeling.updateProperties(element, { 'qa:completed': newVal });
+        updateCompletionOverlay(element);
+        completionOverlays[element.id] ??= null;
+        btn.classList.add('d-none');
+        try {
+          await fetch('/api/bpmn/assign-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diagramName, taskId: element.id, assignee: assignee || '', completed: !newVal })
+          });
+        } catch (err) {
+          console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
         }
-        select.classList.add('d-none');
+        await autoSave();
       };
     }
 
-    function hideEmployeeSelect() {
-      document.getElementById('employeeSelect').classList.add('d-none');
+    function hideCompleteBtn() {
+      document.getElementById('completeBtn').classList.add('d-none');
     }
 
-    // κουμπιά header
-    document.getElementById('saveBtn')   .addEventListener('click', () => saveDiagram());
-    document.getElementById('publishBtn').addEventListener('click', togglePublish);
-    document.getElementById('closeBtn')  .addEventListener('click', () => history.back());
+    // κουμπί κλεισίματος
+    document.getElementById('closeBtn').addEventListener('click', () => history.back());
 
     // DOM ready
     window.addEventListener('DOMContentLoaded', async () => {
       await loadInitial();
-      await loadEmployees();
+      renderAssigneeOverlays();
+      renderCompletionOverlays();
       await loadChatMessages(diagramName);
 
       const commandStack = bpmnModeler.get('commandStack');
@@ -284,6 +308,7 @@
       document.getElementById('redoBtn')   .addEventListener('click', () => commandStack.redo());
 
       const eventBus = bpmnModeler.get('eventBus');
+      eventBus.on('commandStack.changed', scheduleAutoSave);
       eventBus.on('canvas.viewbox.changed', () => {
         currentZoom = canvas.zoom();
         updateZoomDisplay();
@@ -329,16 +354,22 @@
           console.error('❌ Σφάλμα API:', err);
         }
       });
-    });
+      
+     eventBus.on('element.click', e => {
+        const el = e.element;
+        if (el.type === 'bpmn:UserTask') {
+          showCompleteBtn(el, e.originalEvent);
+        } else {
+          hideCompleteBtn();
+        }
+      });
 
-    // κλικ σε user task για ανάθεση
-    bpmnModeler.get('eventBus').on('element.click', e => {
-      const element = e.element;
-      if (element.type === 'bpmn:UserTask') {
-        showEmployeeSelect(element, e.originalEvent);
-      } else {
-        hideEmployeeSelect();
-      }
+      eventBus.on('element.changed', e => {
+        if (e.element.type === 'bpmn:UserTask') {
+          updateAssigneeOverlay(e.element);
+          updateCompletionOverlay(e.element);
+        }
+      });
     });
   </script>
 </body>

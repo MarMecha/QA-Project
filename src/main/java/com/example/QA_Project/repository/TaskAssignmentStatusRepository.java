@@ -13,8 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.QA_Project.model.TaskAssignmentStatus;
 
 public interface TaskAssignmentStatusRepository extends JpaRepository<TaskAssignmentStatus, Long> {
-    List<TaskAssignmentStatus> findByDiagramName(String diagramName);
+    List<TaskAssignmentStatus> findByDiagramNameOrderByUpdatedAtDesc(String diagramName);
     Optional<TaskAssignmentStatus> findByDiagramNameAndTaskId(String diagramName, String taskId);
+
+    // Retrieve all completed task statuses
+    List<TaskAssignmentStatus> findByCompletedTrueOrderByUpdatedAtDesc();
     
     @Modifying
     @Transactional

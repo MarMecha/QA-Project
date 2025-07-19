@@ -14,6 +14,8 @@ public class TaskAssignmentStatus {
     private String taskId;
     private String assignee;
 
+    private java.time.LocalDateTime updatedAt = java.time.LocalDateTime.now();
+
     private boolean completed;
     public Long getId() { return id; }
     public String getDiagramName() { return diagramName; }
@@ -24,4 +26,7 @@ public class TaskAssignmentStatus {
     public void setAssignee(String assignee) { this.assignee = assignee; }
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

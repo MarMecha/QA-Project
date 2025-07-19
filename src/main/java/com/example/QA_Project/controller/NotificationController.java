@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +41,15 @@ public class NotificationController {
 
 
     @GetMapping("/notifications")
-    public ResponseEntity<List<Map<String, String>>> getNotifications(@RequestParam String user) {
+    public ResponseEntity<List<Map<String, String>>> getNotifications(@RequestParam String user,
+                                                                     @RequestParam(required = false) String position) {
         List<Map<String, String>> notifications = new java.util.ArrayList<>();
-
+        boolean isQAExpert = false;
+        if (position != null) {
+            isQAExpert = position.toLowerCase().contains("qa");
+        } else if ("QA-expert".equalsIgnoreCase(user)) {
+            isQAExpert = true;
+        }
         List<ProcessChatMessage> messages = chatRepo.findRecentMessagesForUser(user);
         notifications.addAll(
             messages.stream().map(msg -> {
@@ -50,41 +57,66 @@ public class NotificationController {
                 map.put("message", "💬 Νέο σχόλιο από " + msg.getSender() + " στη διαδικασία: " + msg.getname());
                 map.put("diagram", diagramRepo.findByName(msg.getname())
                                 .map(d -> d.getName()).orElse(""));
+                map.put("time", msg.getSentAt().toString());
                 return map;
             }).collect(Collectors.toList())
         );
 
-        for (GroupAssignedProcess gp : groupAssignedRepo.findByMembersContaining(user)) {
-            Map<String, String> map = new HashMap<>();
-            map.put("message", "✅ Ανατέθηκε νέα διαδικασία στο group " + gp.getGroupName() + ": " + gp.getProcessName());
-            map.put("diagram", gp.getBpmnFileName());
-            notifications.add(map);
+        if (!isQAExpert) {
+            for (GroupAssignedProcess gp : groupAssignedRepo.findByMembersContaining(user)) {
+                Map<String, String> map = new HashMap<>();
+                map.put("message", "✅ Ανατέθηκε νέα διαδικασία στο group " + gp.getGroupName() + ": " + gp.getProcessName());
+                map.put("diagram", gp.getBpmnFileName());
+                if (gp.getAssignedAt() != null) map.put("time", gp.getAssignedAt().toString());
+                notifications.add(map);
+            }
+
+            for (AssignedProcess ap : assignedRepo.findByFullName(user)) {
+                Map<String, String> map = new HashMap<>();
+                map.put("message", "✅ Σας ανατέθηκε η διαδικασία: " + ap.getProcessName());
+                map.put("diagram", ap.getBpmnFileName());
+                if (ap.getAssignedAt() != null) map.put("time", ap.getAssignedAt().toString());
+                notifications.add(map);
+            }
         }
+        
+        if (isQAExpert) {
+            statusRepo.findByCompletedTrueOrderByUpdatedAtDesc().forEach(st -> {
+                Map<String, String> map = new HashMap<>();
+                String who = st.getAssignee();
+                map.put("message",
+                        "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
+                        " task στο διάγραμμα: " + st.getDiagramName());
+                map.put("diagram", st.getDiagramName());
+                if (st.getUpdatedAt() != null) {
+                    map.put("time", st.getUpdatedAt().toString());
+                }
+                notifications.add(map);
+            });
+        } 
+        else {
+            java.util.Set<String> diagrams = new java.util.HashSet<>();
+            groupAssignedRepo.findByMembersContaining(user).forEach(gp -> diagrams.add(gp.getBpmnFileName()));
+            assignedRepo.findByFullName(user).forEach(ap -> diagrams.add(ap.getBpmnFileName()));
 
-        for (AssignedProcess ap : assignedRepo.findByFullName(user)) {
-            Map<String, String> map = new HashMap<>();
-            map.put("message", "✅ Σας ανατέθηκε η διαδικασία: " + ap.getProcessName());
-            map.put("diagram", ap.getBpmnFileName());
-            notifications.add(map);
+            for (String d : diagrams) {
+                statusRepo.findByDiagramNameOrderByUpdatedAtDesc(d).stream()
+                    .filter(TaskAssignmentStatus::isCompleted)
+                    .forEach(st -> {
+                        Map<String, String> map = new HashMap<>();
+                        String who = st.getAssignee();
+                        map.put("message", "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
+                                " task στο διάγραμμα: " + d);
+                        map.put("diagram", d);
+                        if (st.getUpdatedAt() != null) {
+                            map.put("time", st.getUpdatedAt().toString());
+                        }
+                        notifications.add(map);
+                    });
+            }
         }
-
-        java.util.Set<String> diagrams = new java.util.HashSet<>();
-        groupAssignedRepo.findByMembersContaining(user).forEach(gp -> diagrams.add(gp.getBpmnFileName()));
-        assignedRepo.findByFullName(user).forEach(ap -> diagrams.add(ap.getBpmnFileName()));
-
-        for (String d : diagrams) {
-            statusRepo.findByDiagramName(d).stream()
-                .filter(TaskAssignmentStatus::isCompleted)
-                .forEach(st -> {
-                    Map<String, String> map = new HashMap<>();
-                    String who = st.getAssignee();
-                    map.put("message", "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
-                            " task στο διάγραμμα: " + d);
-                    map.put("diagram", d);
-                    notifications.add(map);
-                });
-        }
-
+        notifications.sort(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()));
+        notifications.forEach(m -> m.remove("time"));
         return ResponseEntity.ok(notifications);
     }
 }

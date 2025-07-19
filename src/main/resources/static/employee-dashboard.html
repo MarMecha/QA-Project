@@ -5,36 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employee Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    .notif-panel {
-      position: fixed;
-      top: 0;
-      right: -400px;
-      width: 350px;
-      height: 100vh;
-      background: #f9f9f9;
-      box-shadow: -2px 0 6px rgba(0,0,0,0.1);
-      overflow-y: auto;
-      transition: right 0.3s ease;
-      padding: 1rem;
-      z-index: 1050;
-    }
-    .notif-panel.open {
-      right: 0;
-    }
-    .notif-panel h5 {
-      margin-bottom: 1rem;
-    }
-    .notif-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1100;
-    }
-  </style>
+  <link rel="stylesheet" href="css/notifications.css" />
 </head>
 <body class="bg-light">
-  <button class="btn btn-outline-primary notif-btn" onclick="toggleNotifications()">
+  <button class="btn btn-outline-primary notif-btn navbar-bell" onclick="toggleNotifications()">
     🔔 <span id="notifBtnText">Ειδοποιήσεις</span>
     <span id="notifBadge" class="badge bg-danger ms-2" style="display: none;"></span>
   </button>
@@ -119,41 +93,6 @@
       }
     }
 
-    async function loadNotifications() {
-      const name = localStorage.getItem('employeeName');
-      const panel = document.getElementById("notification-list");
-      panel.innerHTML = "<p class='text-muted'>⏳ Φόρτωση...</p>";
-
-      try {
-        const res = await fetch(`/api/notifications?user=${encodeURIComponent(name)}`);
-        const data = await res.json();
-
-        if (data.length === 0) {
-          panel.innerHTML = "<p class='text-muted'>Δεν υπάρχουν ειδοποιήσεις.</p>";
-        } else {
-          panel.innerHTML = "";
-          data.forEach(n => {
-            const link = document.createElement("a");
-            link.href = `modeler.html?name=${encodeURIComponent(n.diagram)}`;
-            link.className = "list-group-item list-group-item-action";
-            link.textContent = n.message;
-            panel.appendChild(link);
-          });
-        }
-      } catch (e) {
-        panel.innerHTML = "<p class='text-danger'>⚠️ Σφάλμα φόρτωσης ειδοποιήσεων.</p>";
-      }
-    }
-
-
-    function toggleNotifications() {
-      const panel = document.getElementById('notifPanel');
-      panel.classList.toggle('open');
-      if (panel.classList.contains('open')) {
-        loadNotifications();
-      }
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       const name = localStorage.getItem('employeeName');
       const info = document.getElementById('userInfo');
@@ -165,5 +104,6 @@
       loadAssignments();
     });
   </script>
+  <script src="js/notifications.js"></script>
 </body>
 </html>
