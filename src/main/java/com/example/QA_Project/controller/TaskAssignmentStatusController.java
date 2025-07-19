@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
-import com.example.QA_Project.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/bpmn")
@@ -18,15 +17,13 @@ public class TaskAssignmentStatusController {
     @Autowired
     private TaskAssignmentStatusRepository repository;
 
-    @Autowired
-    private NotificationService notificationService;
-
     @PostMapping("/assign-status")
     public ResponseEntity<?> saveStatus(@RequestBody TaskAssignmentStatus incoming) {
-        Optional<TaskAssignmentStatus> existingOpt = repository.findByDiagramNameAndTaskId(
-            incoming.getDiagramName(), incoming.getTaskId()
-        );
-
+        Optional<TaskAssignmentStatus> existingOpt = repository
+            .findTopByDiagramNameAndTaskIdOrderByUpdatedAtDesc(
+                incoming.getDiagramName(),
+                incoming.getTaskId()
+            );
         boolean wasCompleted = false;
 
         TaskAssignmentStatus entity;
@@ -51,10 +48,6 @@ public class TaskAssignmentStatusController {
         // DEBUG LOGGING (προσωρινό)
         System.out.println("🔁 wasCompleted: " + wasCompleted);
         System.out.println("🔁 nowCompleted: " + nowCompleted);
-
-        if (!wasCompleted && nowCompleted) {
-            notificationService.notifyTaskCompletion(entity);
-        }
 
         return ResponseEntity.ok().body("✅ Αποθηκεύτηκε");
     }

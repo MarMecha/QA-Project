@@ -14,7 +14,12 @@ import com.example.QA_Project.model.TaskAssignmentStatus;
 
 public interface TaskAssignmentStatusRepository extends JpaRepository<TaskAssignmentStatus, Long> {
     List<TaskAssignmentStatus> findByDiagramNameOrderByUpdatedAtDesc(String diagramName);
-    Optional<TaskAssignmentStatus> findByDiagramNameAndTaskId(String diagramName, String taskId);
+    /**
+     * Returns the most recently updated status for the given diagram name and
+     * task id. More than one record can exist for the same pair, so we order by
+     * {@code updatedAt} and only return the first result.
+     */
+    Optional<TaskAssignmentStatus> findTopByDiagramNameAndTaskIdOrderByUpdatedAtDesc(String diagramName, String taskId);
 
     // Retrieve all completed task statuses
     List<TaskAssignmentStatus> findByCompletedTrueOrderByUpdatedAtDesc();

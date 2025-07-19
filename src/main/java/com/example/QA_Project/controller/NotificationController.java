@@ -13,12 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import com.example.QA_Project.model.ProcessChatMessage;
 import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.AssignedProcess;
-import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.BpmnDiagramRepository;
 import com.example.QA_Project.repository.ProcessChatMessageRepository;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import com.example.QA_Project.repository.AssignedProcessRepository;
-import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
 
 @RestController
 @RequestMapping("/api")
@@ -35,10 +33,6 @@ public class NotificationController {
 
     @Autowired
     private AssignedProcessRepository assignedRepo;
-
-    @Autowired
-    private TaskAssignmentStatusRepository statusRepo;
-
 
     @GetMapping("/notifications")
     public ResponseEntity<List<Map<String, String>>> getNotifications(@RequestParam String user,
@@ -61,60 +55,6 @@ public class NotificationController {
                 return map;
             }).collect(Collectors.toList())
         );
-
-        if (!isQAExpert) {
-            for (GroupAssignedProcess gp : groupAssignedRepo.findByMembersContaining(user)) {
-                Map<String, String> map = new HashMap<>();
-                map.put("message", "✅ Ανατέθηκε νέα διαδικασία στο group " + gp.getGroupName() + ": " + gp.getProcessName());
-                map.put("diagram", gp.getBpmnFileName());
-                if (gp.getAssignedAt() != null) map.put("time", gp.getAssignedAt().toString());
-                notifications.add(map);
-            }
-
-            for (AssignedProcess ap : assignedRepo.findByFullName(user)) {
-                Map<String, String> map = new HashMap<>();
-                map.put("message", "✅ Σας ανατέθηκε η διαδικασία: " + ap.getProcessName());
-                map.put("diagram", ap.getBpmnFileName());
-                if (ap.getAssignedAt() != null) map.put("time", ap.getAssignedAt().toString());
-                notifications.add(map);
-            }
-        }
-        
-        if (isQAExpert) {
-            statusRepo.findByCompletedTrueOrderByUpdatedAtDesc().forEach(st -> {
-                Map<String, String> map = new HashMap<>();
-                String who = st.getAssignee();
-                map.put("message",
-                        "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
-                        " task στο διάγραμμα: " + st.getDiagramName());
-                map.put("diagram", st.getDiagramName());
-                if (st.getUpdatedAt() != null) {
-                    map.put("time", st.getUpdatedAt().toString());
-                }
-                notifications.add(map);
-            });
-        } 
-        else {
-            java.util.Set<String> diagrams = new java.util.HashSet<>();
-            groupAssignedRepo.findByMembersContaining(user).forEach(gp -> diagrams.add(gp.getBpmnFileName()));
-            assignedRepo.findByFullName(user).forEach(ap -> diagrams.add(ap.getBpmnFileName()));
-
-            for (String d : diagrams) {
-                statusRepo.findByDiagramNameOrderByUpdatedAtDesc(d).stream()
-                    .filter(TaskAssignmentStatus::isCompleted)
-                    .forEach(st -> {
-                        Map<String, String> map = new HashMap<>();
-                        String who = st.getAssignee();
-                        map.put("message", "✅ " + (who != null && !who.isBlank() ? who + " ολοκλήρωσε" : "Ολοκληρώθηκε") +
-                                " task στο διάγραμμα: " + d);
-                        map.put("diagram", d);
-                        if (st.getUpdatedAt() != null) {
-                            map.put("time", st.getUpdatedAt().toString());
-                        }
-                        notifications.add(map);
-                    });
-            }
-        }
         notifications.sort(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()));
         notifications.forEach(m -> m.remove("time"));
         return ResponseEntity.ok(notifications);
