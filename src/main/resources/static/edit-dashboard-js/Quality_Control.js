@@ -1,40 +1,7 @@
-<!DOCTYPE html>
-<html lang="el">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quality Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-  <div class="container py-4">
-    <h1 class="mb-4">🎯 Διαχείριση Ποιοτικών Στόχων</h1>
-
-    <form id="objectiveForm" class="mb-4">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <input type="text" class="form-control" id="objName" placeholder="Φόρμα" list="formOptions" required>
-                <datalist id="formOptions"></datalist>
-            </div>
-            <div class="col-md-5">
-                <input type="text" class="form-control" id="objDesc" placeholder="Ερώτηση" list="questionOptions">
-                <datalist id="questionOptions"></datalist>
-            </div>
-            <div class="col-md-2">
-                <input type="number" step="0.01" class="form-control" id="objTarget" placeholder="Στόχος" required>
-                <small id="currentMeasurement" class="form-text"></small>
-            </div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Προσθήκη</button></div>
-        </div>
-    </form>
-
-    <ul class="list-group" id="objectiveList"></ul>
-  </div>
-
-<script>
-const BASE_URL = 'http://localhost:8080/api/objectives';
-const FORM_URL = 'http://localhost:8080/api/forms';
-const AVG_URL = 'http://localhost:8080/api/responses/averages';
+// --- Διαχείριση Ποιοτικών Στόχων --- //
+const BASE_URL = '/api/objectives';
+const FORM_URL = '/api/forms';
+const AVG_URL = '/api/responses/averages';
 
 let formsCache = [];
 let selectedFormId = null;
@@ -73,7 +40,7 @@ async function fetchAverages(formId) {
 
 function updateMeasurement() {
   const avg = currentAverages[selectedQuestion];
-  const target = parseFloat(document.getElementById('objTarget').value);
+  const target = parseFloat(document.getElementById('objTarget')?.value);
   const el = document.getElementById('currentMeasurement');
   if (avg !== undefined) {
     const diff = !isNaN(target) ? (avg - target).toFixed(2) : '';
@@ -93,9 +60,11 @@ async function loadObjectives() {
     list.innerHTML = '<li class="list-group-item text-muted">Δεν υπάρχουν στόχοι.</li>';
     return;
   }
+
   for (const obj of data) {
     const item = document.createElement('li');
     item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
     const statusRes = await fetch(`${BASE_URL}/${obj.id}/status`);
     let status = null;
     if (statusRes.ok) status = await statusRes.json();
@@ -108,7 +77,8 @@ async function loadObjectives() {
       statusBadge = `<span class="badge text-bg-${color} me-2">${status.latestValue} (${sign}${diff.toFixed(2)})</span>`;
     }
 
-    item.innerHTML = `<div><strong>${obj.name}</strong> - ${obj.description || ''}</div>
+    item.innerHTML = `
+      <div><strong>${obj.name}</strong> - ${obj.description || ''}</div>
       <div>
         <span class="badge text-bg-secondary me-2">🎯 ${obj.targetValue}</span>
         ${statusBadge}
@@ -118,29 +88,32 @@ async function loadObjectives() {
   }
 }
 
-
 async function deleteObjective(id) {
-  const confirmDel = confirm('Διαγραφή στόχου;');
-  if (!confirmDel) return;
+  if (!confirm('Διαγραφή στόχου;')) return;
   const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
-  if (res.ok) {
-    loadObjectives();
-  } else {
-    alert('Αποτυχία διαγραφής');
-  }
+  if (res.ok) loadObjectives();
+  else alert('Αποτυχία διαγραφής');
 }
 
-document.getElementById('objectiveForm').addEventListener('submit', async e => {
+document.getElementById('objectiveForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('objName').value.trim();
   const description = document.getElementById('objDesc').value.trim();
   const target = parseFloat(document.getElementById('objTarget').value);
-  const payload = { name, description, targetValue: target, formId: selectedFormId, questionText: selectedQuestion };
+  const payload = {
+    name,
+    description,
+    targetValue: target,
+    formId: selectedFormId,
+    questionText: selectedQuestion
+  };
+
   const res = await fetch(BASE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+
   if (res.ok) {
     document.getElementById('objectiveForm').reset();
     selectedFormId = null;
@@ -152,8 +125,8 @@ document.getElementById('objectiveForm').addEventListener('submit', async e => {
   }
 });
 
-document.getElementById('objName').addEventListener('focus', loadForms);
-document.getElementById('objName').addEventListener('change', e => {
+document.getElementById('objName')?.addEventListener('focus', loadForms);
+document.getElementById('objName')?.addEventListener('change', e => {
   const form = formsCache.find(f => f.title === e.target.value);
   selectedQuestion = null;
   currentAverages = {};
@@ -168,15 +141,9 @@ document.getElementById('objName').addEventListener('change', e => {
   }
 });
 
-document.getElementById('objDesc').addEventListener('change', e => {
+document.getElementById('objDesc')?.addEventListener('change', e => {
   selectedQuestion = e.target.value;
   updateMeasurement();
 });
 
-document.getElementById('objTarget').addEventListener('input', updateMeasurement);
-
-loadObjectives();
-loadForms();
-</script>
-</body>
-</html>
+document.getElementById('objTarget')?.addEventListener('input', updateMeasurement);
