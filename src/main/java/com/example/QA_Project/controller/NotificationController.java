@@ -44,6 +44,7 @@ public class NotificationController {
         } else if ("QA-expert".equalsIgnoreCase(user)) {
             isQAExpert = true;
         }
+
         List<ProcessChatMessage> messages = chatRepo.findRecentMessagesForUser(user);
         notifications.addAll(
             messages.stream().map(msg -> {
@@ -55,6 +56,26 @@ public class NotificationController {
                 return map;
             }).collect(Collectors.toList())
         );
+
+        
+        if (!isQAExpert) {
+            for (GroupAssignedProcess gp : groupAssignedRepo.findByMembersContaining(user)) {
+                Map<String, String> map = new HashMap<>();
+                map.put("message", "✅ Ανατέθηκε νέα διαδικασία στο group " + gp.getGroupName() + ": " + gp.getProcessName());
+                map.put("diagram", gp.getBpmnFileName());
+                if (gp.getAssignedAt() != null) map.put("time", gp.getAssignedAt().toString());
+                notifications.add(map);
+            }
+
+            for (AssignedProcess ap : assignedRepo.findByFullName(user)) {
+                Map<String, String> map = new HashMap<>();
+                map.put("message", "✅ Σας ανατέθηκε η διαδικασία: " + ap.getProcessName());
+                map.put("diagram", ap.getBpmnFileName());
+                if (ap.getAssignedAt() != null) map.put("time", ap.getAssignedAt().toString());
+                notifications.add(map);
+            }
+        }
+        
         notifications.sort(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()));
         notifications.forEach(m -> m.remove("time"));
         return ResponseEntity.ok(notifications);

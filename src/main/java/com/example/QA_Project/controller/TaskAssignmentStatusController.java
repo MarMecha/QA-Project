@@ -43,9 +43,8 @@ public class TaskAssignmentStatusController {
 
         repository.save(entity);
 
-        boolean nowCompleted = entity.isCompleted();
-
         // DEBUG LOGGING (προσωρινό)
+        boolean nowCompleted = entity.isCompleted();
         System.out.println("🔁 wasCompleted: " + wasCompleted);
         System.out.println("🔁 nowCompleted: " + nowCompleted);
 
