@@ -36,7 +36,7 @@ async function loadQaGroups() {
       <td>${p.bpmnFileName ? `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
       <td>
         <button class="btn btn-sm btn-primary me-2" onclick="editGroup(${idx})">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteGroup(${p.id})">🗑️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteQaGroup(${p.id})">🗑️</button>
       </td>
     </tr>`;
     table.innerHTML += row;
@@ -62,9 +62,14 @@ function editInd(idx) {
   }).then(loadAll);
 }
 
-function deleteInd(id) {
-  if (!confirm('Διαγραφή διαδικασίας;')) return;
-  fetch('/api/qa/' + id, { method: 'DELETE' }).then(loadAll);
+async function deleteInd(id) {
+  if (!confirm('Σίγουρα θέλετε να διαγράψετε αυτή τη διαδικασία;')) return;
+  const res = await fetch('/api/qa/' + id, { method: 'DELETE' });
+  if (res.ok) {
+    loadAll();
+  } else {
+    alert('❌ Σφάλμα διαγραφής');
+  }
 }
 
 function editGroup(idx) {
@@ -86,9 +91,14 @@ function editGroup(idx) {
   }).then(loadAll);
 }
 
-function deleteGroup(id) {
-  if (!confirm('Διαγραφή διαδικασίας;')) return;
-  fetch('/api/qa/group/' + id, { method: 'DELETE' }).then(loadAll);
+async function deleteQaGroup(id) {
+  if (!confirm('Σίγουρα θέλετε να διαγράψετε αυτή τη διαδικασία;')) return;
+  const res = await fetch('/api/qa/group/' + id, { method: 'DELETE' });
+  if (res.ok) {
+    loadAll();
+  } else {
+    alert('❌ Σφάλμα διαγραφής');
+  }
 }
 
 function loadAll() {

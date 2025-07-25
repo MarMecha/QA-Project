@@ -3,6 +3,7 @@ package com.example.QA_Project.service;
 import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.ProcessChatMessage;
+import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import com.example.QA_Project.repository.AssignedProcessRepository;
 import org.springframework.stereotype.Service;
@@ -59,5 +60,26 @@ public class NotificationService {
         for (String member : membersArray) {
             System.out.println("📢 Ειδοποίηση νέας ανάθεσης στον " + member);
         }
+    }
+    public void notifyTaskCompletion(TaskAssignmentStatus status) {
+        System.out.println("📌 notifyTaskCompletion ΚΛΗΘΗΚΕ για διάγραμμα: " + status.getDiagramName());
+
+        // Ειδοποίηση σε μέλη group διαδικασιών
+        assignedRepo.findAll().stream()
+                .filter(p -> p.getBpmnFileName().equalsIgnoreCase(status.getDiagramName()))
+                .forEach(p -> {
+                    for (String member : p.getMembers().split(",\\s*")) {
+                        System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον " + member);
+                    }
+                });
+
+        // Ειδοποίηση σε ατομικές αναθέσεις
+        individualRepo.findByBpmnFileName(status.getDiagramName()).forEach(p -> {
+            System.out.println("📢 Ειδοποίηση ολοκλήρωσης στον " + p.getFullName());
+        });
+    }
+    public void notifyProcessCompletion(String diagramName) {
+        System.out.println("📌 notifyProcessCompletion ΚΛΗΘΗΚΕ για διάγραμμα: " + diagramName);
+        System.out.println("📢 Ο QA-expert ενημερώθηκε ότι το διάγραμμα " + diagramName + " ολοκληρώθηκε");
     }
 }

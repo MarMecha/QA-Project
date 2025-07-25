@@ -265,7 +265,7 @@
           await fetch('/api/bpmn/assign-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ diagramName, taskId: element.id, assignee: assignee || '', completed: !newVal })
+            body: JSON.stringify({ diagramName, taskId: element.id, assignee: assignee || '', completed: newVal })
           });
         } catch (err) {
           console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
