@@ -96,11 +96,13 @@
 
   <!-- Κουμπί ολοκλήρωσης task -->
   <button id="completeBtn" class="btn btn-success position-absolute d-none" style="z-index:1000;">Ολοκληρώθηκε</button>
+  <select id="employeeSelect" class="form-select position-absolute d-none" style="width:200px; z-index:1000;"></select>
 
   <!-- JavaScript -->
   <script>
     const assigneeOverlays = {};
     const completionOverlays = {};
+    let employeeList = [];
     const qaModdle = {
       name: 'QA',
       uri: 'http://example.com/qa',
@@ -278,6 +280,101 @@
       document.getElementById('completeBtn').classList.add('d-none');
     }
 
+    function showEmployeeSelect(element, evt) {
+      const select = document.getElementById('employeeSelect');
+      select.innerHTML = '<option value="">-- Εκχώρηση --</option>';
+      employeeList.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp.fullName;
+        opt.textContent = emp.fullName;
+        select.appendChild(opt);
+      });
+      select.value = element.businessObject.get('camunda:assignee') || '';
+      select.style.left = evt.pageX + 'px';
+      select.style.top  = evt.pageY + 'px';
+      select.classList.remove('d-none');
+
+      const completeBtn = document.getElementById('completeBtn');
+      completeBtn.textContent = element.businessObject.get('qa:completed') ? 'Μη ολοκληρωμένο' : 'Ολοκληρώθηκε';
+      completeBtn.style.left = (evt.pageX + 210) + 'px';
+      completeBtn.style.top  = evt.pageY + 'px';
+      completeBtn.classList.remove('d-none');
+      completeBtn.onclick = async () => {
+        const modeling = bpmnModeler.get('modeling');
+        const prev = element.businessObject.get('qa:completed');
+        const newVal = !(prev === true || prev === 'true');
+        modeling.updateProperties(element, { 'qa:completed': newVal });
+        updateCompletionOverlay(element);
+        completeBtn.classList.add('d-none');
+        select.classList.add('d-none');
+        try {
+          await fetch('/api/bpmn/assign-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diagramName, taskId: element.id, assignee: element.businessObject.get('camunda:assignee') || '', completed: newVal })
+          });
+        } catch (err) {
+          console.error('❌ Σφάλμα αποθήκευσης κατάστασης', err);
+        }
+        await autoSave();
+      };
+
+      select.onchange = async () => {
+        if (select.value) {
+          const modeling = bpmnModeler.get('modeling');
+          modeling.updateProperties(element, { 'camunda:assignee': select.value });
+          updateAssigneeOverlay(element);
+          try {
+            await fetch('/api/bpmn/assign-status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ diagramName, taskId: element.id, assignee: select.value, completed: element.businessObject.get('qa:completed') || false })
+            });
+          } catch (err) {
+            console.error('❌ Σφάλμα αποθήκευσης εκχώρησης', err);
+          }
+          await autoSave();
+        }
+        select.classList.add('d-none');
+        completeBtn.classList.add('d-none');
+      };
+    }
+
+    function hideEmployeeSelect() {
+      document.getElementById('employeeSelect').classList.add('d-none');
+      document.getElementById('completeBtn').classList.add('d-none');
+    }
+
+    async function canEditDiagram() {
+      const position = (localStorage.getItem('employeePosition') || '').toLowerCase();
+      if (position.includes('qa')) return true;
+      const user = localStorage.getItem('employeeName');
+      if (!diagramName || !user) return false;
+      try {
+        const res = await fetch(`/api/qa/leader?diagramName=${encodeURIComponent(diagramName)}&employeeName=${encodeURIComponent(user)}`);
+        if (res.ok) {
+          const data = await res.json();
+          return data.leader === true;
+        }
+      } catch (err) {
+        console.error('leader check failed', err);
+      }
+      return false;
+    }
+
+    function restrictEditing() {
+      document.getElementById('paletteToggle').classList.add('d-none');
+      document.querySelector('.djs-palette')?.classList.add('hidden');
+      const eventBus = bpmnModeler.get('eventBus');
+      ['shape.create','shape.move','shape.delete','shape.resize','connection.create','connection.move','connection.delete']
+        .forEach(cmd => eventBus.on('commandStack.' + cmd + '.canExecute', 5000, () => false));
+      const contextPad = bpmnModeler.get('contextPad');
+      contextPad.close();
+      const style = document.createElement('style');
+      style.innerHTML = '.djs-context-pad { display: none !important; }';
+      document.head.appendChild(style);
+    }
+
     // κουμπί κλεισίματος
     document.getElementById('closeBtn').addEventListener('click', () => history.back());
 
@@ -287,6 +384,17 @@
       renderAssigneeOverlays();
       renderCompletionOverlays();
       await loadChatMessages(diagramName);
+      const editable = await canEditDiagram();
+      if (!editable) {
+        restrictEditing();
+      } else {
+        try {
+          const res = await fetch('/api/employees');
+          if (res.ok) employeeList = await res.json();
+        } catch (err) {
+          console.error('❌ Σφάλμα φόρτωσης υπαλλήλων', err);
+        }
+      }
 
       const commandStack = bpmnModeler.get('commandStack');
       const canvas       = bpmnModeler.get('canvas');
@@ -355,12 +463,20 @@
         }
       });
       
-     eventBus.on('element.click', e => {
+      eventBus.on('element.click', e => {
         const el = e.element;
         if (el.type === 'bpmn:UserTask') {
-          showCompleteBtn(el, e.originalEvent);
+          if (editable) {
+            showEmployeeSelect(el, e.originalEvent);
+          } else {
+            showCompleteBtn(el, e.originalEvent);
+          }
         } else {
-          hideCompleteBtn();
+          if (editable) {
+            hideEmployeeSelect();
+          } else {
+            hideCompleteBtn();
+          }
         }
       });
 

@@ -8,12 +8,22 @@
   <link rel="stylesheet" href="css/notifications.css" />
 </head>
 <body class="bg-light">
+  <button class="btn btn-outline-primary notif-btn navbar-msg" onclick="toggleMessages()">
+    💬 <span id="msgBtnText">Μηνύματα</span>
+    <span id="msgBadge" class="badge bg-danger ms-2" style="display: none;"></span>
+  </button>
   <button class="btn btn-outline-primary notif-btn navbar-bell" onclick="toggleNotifications()">
     🔔 <span id="notifBtnText">Ειδοποιήσεις</span>
     <span id="notifBadge" class="badge bg-danger ms-2" style="display: none;"></span>
   </button>
 
 
+  <div class="notif-panel" id="msgPanel">
+    <h5>💬 Μηνύματα</h5>
+    <div id="message-list">
+      <p class="text-muted">Φόρτωση...</p>
+    </div>
+  </div>
   <div class="notif-panel" id="notifPanel">
     <h5>📢 Ειδοποιήσεις</h5>
     <div id="notification-list">
@@ -104,6 +114,7 @@
       loadAssignments();
     });
   </script>
+  <script src="js/message-notifications.js"></script>
   <script src="js/notifications.js"></script>
 </body>
 </html>

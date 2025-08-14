@@ -22,7 +22,7 @@ import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
 
 @RestController
 @RequestMapping("/api")
-public class NotificationController {
+    public class NotificationController {
 
     @Autowired
     private ProcessChatMessageRepository chatRepo;
@@ -51,16 +51,18 @@ public class NotificationController {
         }
 
         List<ProcessChatMessage> messages = chatRepo.findRecentMessagesForUser(user);
-        notifications.addAll(
-            messages.stream().map(msg -> {
-                Map<String, String> map = new HashMap<>();
-                map.put("message", "💬 Νέο σχόλιο από " + msg.getSender() + " στη διαδικασία: " + msg.getname());
-                map.put("diagram", diagramRepo.findByName(msg.getname())
-                                .map(d -> d.getName()).orElse(""));
-                map.put("time", msg.getSentAt().toString());
-                return map;
-            }).collect(Collectors.toList())
-        );
+        if (isQAExpert) {
+            notifications.addAll(
+                messages.stream().map(msg -> {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("message", "💬 Νέο σχόλιο από " + msg.getSender() + " στη διαδικασία: " + msg.getname());
+                    map.put("diagram", diagramRepo.findByName(msg.getname())
+                                    .map(d -> d.getName()).orElse(""));
+                    map.put("time", msg.getSentAt().toString());
+                    return map;
+                }).collect(Collectors.toList())
+            );
+        }
 
         
         if (!isQAExpert) {
@@ -130,5 +132,28 @@ public class NotificationController {
         notifications.sort(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()));
         notifications.forEach(m -> m.remove("time"));
         return ResponseEntity.ok(notifications);
+    }
+
+    @GetMapping("/message-notifications")
+    public ResponseEntity<List<Map<String, String>>> getMessageNotifications(@RequestParam String user) {
+        List<ProcessChatMessage> messages = chatRepo.findRecentMessagesForUser(user);
+        Map<String, List<ProcessChatMessage>> grouped =
+            messages.stream().collect(Collectors.groupingBy(ProcessChatMessage::getname));
+
+        List<Map<String, String>> result = grouped.entrySet().stream().map(entry -> {
+            List<ProcessChatMessage> groupMsgs = entry.getValue();
+            ProcessChatMessage latest = groupMsgs.stream()
+                    .max(Comparator.comparing(ProcessChatMessage::getSentAt))
+                    .orElse(null);
+
+            Map<String, String> map = new HashMap<>();
+            map.put("message", "💬 νέα μηνύματα στη διαδικασία: " + latest.getname());
+            map.put("diagram", diagramRepo.findByName(latest.getname())
+                            .map(d -> d.getName()).orElse(""));
+            map.put("time", latest.getSentAt().toString());
+            return map;
+        }).sorted(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()))
+          .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 }

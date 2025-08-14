@@ -24,6 +24,7 @@ public class GroupAssignedProcess {
     @Column(length = 1000)
     private String members;
 
+    private String leader;
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -45,4 +46,7 @@ public class GroupAssignedProcess {
 
     public String getMembers() { return members; }
     public void setMembers(String members) { this.members = members; }
+    
+    public String getLeader() { return leader; }
+    public void setLeader(String leader) { this.leader = leader; }
 }

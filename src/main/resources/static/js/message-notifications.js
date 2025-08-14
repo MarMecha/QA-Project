@@ -1,53 +1,50 @@
-function notifStorageKey() {
+function msgStorageKey() {
   const name = localStorage.getItem('employeeName') || 'anon';
-  return `readNotifKeys_${name}`;
+  return `readMsgTimes_${name}`;
 }
 
-function getNotifReadMap() {
+function getReadMap() {
   try {
-    return JSON.parse(localStorage.getItem(notifStorageKey()) || '{}');
+    return JSON.parse(localStorage.getItem(msgStorageKey()) || '{}');
   } catch {
     return {};
   }
 }
 
-function markNotifRead(key) {
-  const map = getNotifReadMap();
-  map[key] = true;
-  localStorage.setItem(notifStorageKey(), JSON.stringify(map));
+function markDiagramRead(diagram, time) {
+  const map = getReadMap();
+  map[diagram] = time;
+  localStorage.setItem(msgStorageKey(), JSON.stringify(map));
 }
 
-async function loadNotifications() {
+async function loadMessages() {
   const name = localStorage.getItem('employeeName');
-  const position = localStorage.getItem('employeePosition') || '';
-  const panel = document.getElementById('notification-list');
+  const panel = document.getElementById('message-list');
   if (!panel) return;
-  
+
   panel.innerHTML = "<p class='text-muted'>⏳ Φόρτωση...</p>";
   try {
-    const url = `/api/notifications?user=${encodeURIComponent(name)}&position=${encodeURIComponent(position)}`;
-    const res = await fetch(url);
+    const res = await fetch(`/api/message-notifications?user=${encodeURIComponent(name)}`);
     if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
-    const badge = document.getElementById('notifBadge');
-    const readMap = getNotifReadMap();
+    const badge = document.getElementById('msgBadge');
+    const readMap = getReadMap();
     const unread = data.filter(n => {
-      const key = `${n.message}|${n.diagram}`;
-      return !readMap[key];
+      const t = readMap[n.diagram];
+      return !t || new Date(n.time) > new Date(t);
     });
     if (unread.length === 0) {
-      panel.innerHTML = "<p class='text-muted'>Δεν υπάρχουν ειδοποιήσεις.</p>";
+      panel.innerHTML = "<p class='text-muted'>Δεν υπάρχουν νέα μηνύματα.</p>";
       if (badge) badge.style.display = 'none';
     } else {
-      panel.innerHTML = '';
+      panel.innerHTML = "";
       unread.forEach(n => {
-        const key = `${n.message}|${n.diagram}`;
         const link = document.createElement('a');
         link.href = `modeler.html?name=${encodeURIComponent(n.diagram)}`;
         link.className = 'list-group-item list-group-item-action';
         link.textContent = n.message;
         link.addEventListener('click', () => {
-          markNotifRead(key);
+          markDiagramRead(n.diagram, n.time);
           if (badge) {
             const count = parseInt(badge.textContent, 10) - 1;
             if (count > 0) badge.textContent = count;
@@ -62,27 +59,26 @@ async function loadNotifications() {
       }
     }
   } catch (e) {
-    console.error('Failed to load notifications', e);
-    panel.innerHTML = "<p class='text-danger'>⚠️ Σφάλμα φόρτωσης ειδοποιήσεων.</p>";
+    console.error('Failed to load messages', e);
+    panel.innerHTML = "<p class='text-danger'>⚠️ Σφάλμα φόρτωσης μηνυμάτων.</p>";
   }
 }
 
-function toggleNotifications() {
-  const panel = document.getElementById('notifPanel');
+function toggleMessages() {
+  const panel = document.getElementById('msgPanel');
   if (!panel) return;
   panel.classList.toggle('open');
   if (panel.classList.contains('open')) {
-    loadNotifications();
+    loadMessages();
   }
 }
 
-// Close notifications panel when clicking outside of it
 document.addEventListener('click', (e) => {
-  const panel = document.getElementById('notifPanel');
-  const bell = document.querySelector('.navbar-bell');
-  if (!panel || !bell) return;
+  const panel = document.getElementById('msgPanel');
+  const btn = document.querySelector('.navbar-msg');
+  if (!panel || !btn) return;
   if (panel.classList.contains('open')) {
-    if (!panel.contains(e.target) && !bell.contains(e.target)) {
+    if (!panel.contains(e.target) && !btn.contains(e.target)) {
       panel.classList.remove('open');
     }
   }
@@ -90,7 +86,7 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const panel = document.getElementById('notifPanel');
+    const panel = document.getElementById('msgPanel');
     if (panel && panel.classList.contains('open')) {
       panel.classList.remove('open');
     }
@@ -98,5 +94,5 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadNotifications();
+  loadMessages();
 });

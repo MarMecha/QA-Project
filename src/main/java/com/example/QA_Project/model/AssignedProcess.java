@@ -21,6 +21,7 @@ public class AssignedProcess {
 
     private String fullName;
     private String position;
+    private String leader;
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -43,4 +44,7 @@ public class AssignedProcess {
 
     public String getPosition() { return position; }
     public void setPosition(String position) { this.position = position; }
+
+    public String getLeader() { return leader; }
+    public void setLeader(String leader) { this.leader = leader; }
 }

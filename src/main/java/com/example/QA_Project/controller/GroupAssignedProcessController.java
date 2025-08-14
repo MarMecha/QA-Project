@@ -37,8 +37,10 @@ public class GroupAssignedProcessController {
             @RequestParam String processName, // μπορείς να το κρατήσεις για εμφάνιση, όχι για process logic
             @RequestParam Long groupId,
             @RequestParam String description,
+            @RequestParam String leaderName,
             @RequestParam(required = false) String diagramName,
             @RequestParam(value = "bpmnFile", required = false) MultipartFile file
+            
     ) {
         EmployeeGroup group = groupRepo.findById(groupId).orElse(null);
         if (group == null) {
@@ -68,6 +70,7 @@ public class GroupAssignedProcessController {
                 .map(Employee::getFullName)
                 .collect(Collectors.joining(", "));
         process.setMembers(members);
+        process.setLeader(leaderName);
 
         groupAssignedRepo.save(process);
 

@@ -1,22 +1,20 @@
 /* Notification bell styles */
 .navbar-bell {
   border: none;
-  background: transparent;
-  color: white;
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 
 .navbar-bell:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 42, 255, 0.2);
 }
 
 .notif-panel {
+  background: white;
   position: fixed;
   top: 0;
   right: -400px;
   width: 350px;
   height: 100vh;
-  background: #f9f9f9;
   box-shadow: -2px 0 6px rgba(0,0,0,0.1);
   overflow-y: auto;
   transition: right 0.3s ease;
@@ -25,6 +23,7 @@
 }
 
 .notif-panel.open {
+  background: white;
   right: 0;
 }
 
@@ -36,5 +35,9 @@
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 1100;
+}
+
+/* Position the messages button to the left of the bell */
+.navbar-msg {
+  right: 180px;
 }

@@ -64,6 +64,7 @@ public class AssignedProcessController {
         process.setAssignedAt(LocalDateTime.now());
         process.setFullName(employee.getFullName());
         process.setPosition(employee.getPosition());
+        process.setLeader(employee.getFullName());
 
         assignedRepo.save(process);
 
@@ -90,6 +91,18 @@ public class AssignedProcessController {
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/leader")
+    public java.util.Map<String, Boolean> isLeader(@RequestParam String diagramName,
+                                                   @RequestParam String employeeName) {
+        boolean leader = assignedRepo.findByBpmnFileName(diagramName).stream()
+                .anyMatch(p -> employeeName.equals(p.getLeader()));
+        if (!leader) {
+            leader = groupAssignedRepo.findByBpmnFileName(diagramName).stream()
+                    .anyMatch(p -> employeeName.equals(p.getLeader()));
+        }
+        return java.util.Map.of("leader", leader);
+    }
+    
       @PutMapping("/{id}")
     public AssignedProcess update(@PathVariable Long id, @RequestBody AssignedProcess updated) {
         return assignedRepo.findById(id).map(p -> {

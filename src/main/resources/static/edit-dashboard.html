@@ -89,6 +89,11 @@
             </div>
           </div>
 
+          <div class="col-md-6">
+              <label for="groupLeader" class="form-label">Leader Ομάδας</label>
+              <select id="groupLeader" class="form-select" required></select>
+            </div>
+
           <div class="col-md-12">
             <label for="description" class="form-label">Περιγραφή Διαδικασίας</label>
             <textarea class="form-control" id="description" rows="3" required></textarea>
@@ -388,6 +393,18 @@
       const group = groupList.find(g => g.name === input.value);
       document.getElementById('groupMembers').value = group ? group.members.map(m => m.fullName).join(', ') : '';
       document.getElementById('groupId').value = group ? group.id : '';
+      const leaderSel = document.getElementById('groupLeader');
+      if (leaderSel) {
+        leaderSel.innerHTML = '';
+        if (group) {
+          group.members.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.fullName;
+            opt.textContent = m.fullName;
+            leaderSel.appendChild(opt);
+          });
+        }
+      }
     }
 
     function switchTab(tab) {
@@ -452,6 +469,7 @@
             document.getElementById('groupSearch').value = g.name;
             document.getElementById('groupId').value = g.id;
             document.getElementById('groupMembers').value = g.members.map(m => m.fullName).join(', ');
+            updateGroupMembers();
             suggestions.classList.add('d-none');
           });
           suggestions.appendChild(li);
@@ -520,6 +538,7 @@
           url = '/api/qa/assign';
         } else {
           formData.append('groupId', document.getElementById('groupId').value);
+          formData.append('leaderName', document.getElementById('groupLeader').value);
           url = '/api/qa/assign-group';
         }
 
