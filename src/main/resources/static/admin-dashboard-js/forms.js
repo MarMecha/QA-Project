@@ -2,6 +2,12 @@
 const BASE_URL = 'http://localhost:8080/api/forms';
 let questionCounter = 0;
 let editingFormId = null;
+const CHART_COLORS = [
+  '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4',
+  '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff',
+  '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+  '#000075', '#808080'
+];
 
 function addQuestion(text = '') {
   const container = document.getElementById('questionList');
@@ -277,13 +283,15 @@ async function loadSavedForms() {
 async function loadHistoryForms() {
   const container = document.getElementById('historyForms');
   container.innerHTML = '';
-  const [histRes, currentRes] = await Promise.all([
+  const [histRes, currentRes, allRes] = await Promise.all([
     fetch(`${BASE_URL}/history`),
-    fetch(`${BASE_URL}/current`)
+    fetch(`${BASE_URL}/current`),
+    fetch(BASE_URL)
   ]);
   if (!histRes.ok) return;
   const forms = await histRes.json();
   const currentForms = currentRes.ok ? await currentRes.json() : [];
+  const allForms = allRes.ok ? await allRes.json() : [];
   const currentMap = {};
   currentForms.forEach(f => { currentMap[f.title] = f; });
   if (!Array.isArray(forms) || forms.length === 0) {
@@ -323,7 +331,8 @@ async function loadHistoryForms() {
         <td class="text-center">${diffMarkup}</td>
       </tr>`;
     }).join('');
-    container.innerHTML += `
+    const chartId = `historyChart${form.id}`;
+    const html = `
       <div class="accordion-item">
         <h2 class="accordion-header" id="historyHeading${form.id}">
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#historyCollapse${form.id}" aria-expanded="false" aria-controls="historyCollapse${form.id}">
@@ -345,17 +354,50 @@ async function loadHistoryForms() {
                 ${questionsRows}
               </tbody>
             </table>
+            <div class="p-3"><canvas id="${chartId}"></canvas></div>
           </div>
         </div>
       </div>`;
+    container.insertAdjacentHTML('beforeend', html);
+
+    const sameTitleForms = allForms
+      .filter(f => f.title === form.title)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    renderHistoryChart(chartId, sameTitleForms);
   }
+}
+
+function renderHistoryChart(canvasId, forms) {
+  if (!forms.length) return;
+  const labels = forms.map(f => new Date(f.createdAt).getFullYear());
+  Promise.all(forms.map(f => fetch(`/api/responses/averages/${f.id}`).then(r => r.ok ? r.json() : {})))
+    .then(avgList => {
+      const questions = forms[0].questions || [];
+      const datasets = questions.map((q, idx) => ({
+        label: q,
+        data: avgList.map(avgs => avgs[q] ?? null),
+        borderColor: CHART_COLORS[idx % CHART_COLORS.length],
+        fill: false
+      }));
+      const ctx = document.getElementById(canvasId);
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, suggestedMax: 5 } }
+          }
+        });
+      }
+    });
 }
 
 async function loadActiveFormsWithAverages() {
   const container = document.getElementById('activeForms');
   container.innerHTML = '';
-  const res = await fetch('/api/forms');
-  const forms = await res.json();
+  const res = await fetch('/api/forms/current');
+  const forms = res.ok ? await res.json() : [];
   const activeForms = forms.filter(f => f.active === true || f.active === 'true');
   if (activeForms.length === 0) {
     container.innerHTML = '<div class="text-muted">Δεν υπάρχουν ενεργές φόρμες.</div>';

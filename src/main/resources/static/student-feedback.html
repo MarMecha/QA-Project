@@ -21,7 +21,7 @@
       list.innerHTML = "";
 
       try {
-        const res = await fetch("http://localhost:8080/api/forms");
+        const res = await fetch("http://localhost:8080/api/forms/current");
         const forms = await res.json();
 
         // ✅ Φίλτραρε μόνο τις ενεργές φόρμες
