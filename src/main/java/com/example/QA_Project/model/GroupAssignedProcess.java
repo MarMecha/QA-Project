@@ -1,6 +1,7 @@
 package com.example.QA_Project.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,6 +19,8 @@ public class GroupAssignedProcess {
     private String bpmnFileName;
 
     private LocalDateTime assignedAt;
+
+    private LocalDate expiryDate;
 
     private String groupName;
 
@@ -40,6 +43,9 @@ public class GroupAssignedProcess {
 
     public LocalDateTime getAssignedAt() { return assignedAt; }
     public void setAssignedAt(LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
+
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public String getGroupName() { return groupName; }
     public void setGroupName(String groupName) { this.groupName = groupName; }

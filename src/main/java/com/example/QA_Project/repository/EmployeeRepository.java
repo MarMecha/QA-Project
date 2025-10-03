@@ -4,6 +4,7 @@ import com.example.QA_Project.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
@@ -15,4 +16,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Employee findByFullName(String fullName);
 
     Employee findByUsername(String username);
+
+    List<Employee> findByPositionContainingIgnoreCase(String position);
 }

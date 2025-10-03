@@ -15,6 +15,7 @@ import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.TaskAssignmentStatus;
 import com.example.QA_Project.repository.BpmnDiagramRepository;
+import com.example.QA_Project.repository.DeadlineNotificationRepository;
 import com.example.QA_Project.repository.ProcessChatMessageRepository;
 import com.example.QA_Project.repository.GroupAssignedProcessRepository;
 import com.example.QA_Project.repository.AssignedProcessRepository;
@@ -38,6 +39,9 @@ import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
 
     @Autowired
     private TaskAssignmentStatusRepository statusRepo;
+
+    @Autowired
+    private DeadlineNotificationRepository deadlineRepo; 
 
     @GetMapping("/notifications")
     public ResponseEntity<List<Map<String, String>>> getNotifications(@RequestParam String user,
@@ -127,6 +131,14 @@ import com.example.QA_Project.repository.TaskAssignmentStatusRepository;
                 }
             });
         }
+
+        deadlineRepo.findByRecipient(user).forEach(n -> {
+            Map<String, String> map = new HashMap<>();
+            map.put("message", n.getMessage());
+            map.put("diagram", n.getDiagram());
+            if (n.getCreatedAt() != null) map.put("time", n.getCreatedAt().toString());
+            notifications.add(map);
+        });
 
         
         notifications.sort(Comparator.comparing(m -> m.getOrDefault("time", ""), Comparator.reverseOrder()));

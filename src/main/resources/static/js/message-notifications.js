@@ -19,6 +19,7 @@ function markDiagramRead(diagram, time) {
 
 async function loadMessages() {
   const name = localStorage.getItem('employeeName');
+  const position = localStorage.getItem('employeePosition') || '';
   const panel = document.getElementById('message-list');
   if (!panel) return;
 
@@ -40,7 +41,10 @@ async function loadMessages() {
       panel.innerHTML = "";
       unread.forEach(n => {
         const link = document.createElement('a');
-        link.href = `modeler.html?name=${encodeURIComponent(n.diagram)}`;
+         const target = position === 'QA'
+          ? `edit-dashboard.html#modeler&name=${encodeURIComponent(n.diagram)}`
+          : `modeler.html?name=${encodeURIComponent(n.diagram)}`;
+        link.href = target;
         link.className = 'list-group-item list-group-item-action';
         link.textContent = n.message;
         link.addEventListener('click', () => {

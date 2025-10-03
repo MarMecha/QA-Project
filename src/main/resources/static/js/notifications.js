@@ -43,7 +43,10 @@ async function loadNotifications() {
       unread.forEach(n => {
         const key = `${n.message}|${n.diagram}`;
         const link = document.createElement('a');
-        link.href = `modeler.html?name=${encodeURIComponent(n.diagram)}`;
+        const target = position === 'qa'
+          ? `edit-dashboard.html#modeler&name=${encodeURIComponent(n.diagram)}`
+          : `modeler.html?name=${encodeURIComponent(n.diagram)}`;
+        link.href = target;
         link.className = 'list-group-item list-group-item-action';
         link.textContent = n.message;
         link.addEventListener('click', () => {

@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.QA_Project.repository.BpmnDiagramRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class AssignedProcessController {
         @RequestParam String processName,
         @RequestParam String employeeName,
         @RequestParam String description,
+        @RequestParam String expiryDate,
         @RequestParam(required = false) String diagramName,
         @RequestParam(value = "bpmnFile", required = false) MultipartFile file
     ) {
@@ -62,6 +64,7 @@ public class AssignedProcessController {
             process.setBpmnFileName(file.getOriginalFilename());
         }
         process.setAssignedAt(LocalDateTime.now());
+        process.setExpiryDate(LocalDate.parse(expiryDate));
         process.setFullName(employee.getFullName());
         process.setPosition(employee.getPosition());
         process.setLeader(employee.getFullName());
@@ -111,6 +114,7 @@ public class AssignedProcessController {
             p.setBpmnFileName(updated.getBpmnFileName());
             p.setFullName(updated.getFullName());
             p.setPosition(updated.getPosition());
+            p.setExpiryDate(updated.getExpiryDate());
             return assignedRepo.save(p);
         }).orElseThrow(() -> new RuntimeException("Process not found with id: " + id));
     }

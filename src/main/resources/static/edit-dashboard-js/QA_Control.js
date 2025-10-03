@@ -12,6 +12,7 @@ async function loadIndividual() {
       <td>${p.description || ''}</td>
       <td>${p.fullName || ''}</td>
       <td>${p.position || ''}</td>
+      <td>${p.expiryDate || ''}</td>
       <td>${p.bpmnFileName ? `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
       <td>
         <button class="btn btn-sm btn-primary me-2" onclick="editInd(${idx})">✏️</button>
@@ -33,6 +34,7 @@ async function loadQaGroups() {
       <td>${p.description || ''}</td>
       <td>${p.groupName || ''}</td>
       <td>${p.members || ''}</td>
+      <td>${p.expiryDate || ''}</td>
       <td>${p.bpmnFileName ? `<a href="edit-dashboard.html#modeler&name=${encodeURIComponent(p.bpmnFileName)}">${p.bpmnFileName}</a>` : '–'}</td>
       <td>
         <button class="btn btn-sm btn-primary me-2" onclick="editGroup(${idx})">✏️</button>
@@ -55,10 +57,12 @@ function editInd(idx) {
   if (fullName === null) return;
   const position = prompt('Θέση', p.position);
   if (position === null) return;
+  const expiryDate = prompt('Ημερομηνία Λήξης (YYYY-MM-DD)', p.expiryDate || '');
+  if (expiryDate === null) return;
   fetch('/api/qa/' + p.id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ processName, description, bpmnFileName, fullName, position })
+    body: JSON.stringify({ processName, description, bpmnFileName, fullName, position, expiryDate })
   }).then(loadAll);
 }
 
@@ -84,10 +88,12 @@ function editGroup(idx) {
   if (groupName === null) return;
   const members = prompt('Μέλη', p.members);
   if (members === null) return;
+  const expiryDate = prompt('Ημερομηνία Λήξης (YYYY-MM-DD)', p.expiryDate || '');
+  if (expiryDate === null) return;
   fetch('/api/qa/group/' + p.id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ processName, description, bpmnFileName, groupName, members })
+    body: JSON.stringify({ processName, description, bpmnFileName, groupName, members, expiryDate })
   }).then(loadAll);
 }
 

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ public class GroupAssignedProcessController {
             @RequestParam Long groupId,
             @RequestParam String description,
             @RequestParam String leaderName,
+            @RequestParam String expiryDate,
             @RequestParam(required = false) String diagramName,
             @RequestParam(value = "bpmnFile", required = false) MultipartFile file
             
@@ -64,6 +66,7 @@ public class GroupAssignedProcessController {
 
         process.setDescription(description);
         process.setAssignedAt(LocalDateTime.now());
+        process.setExpiryDate(LocalDate.parse(expiryDate));
         process.setGroupName(group.getName());
 
         String members = group.getMembers().stream()
@@ -93,6 +96,7 @@ public class GroupAssignedProcessController {
             p.setBpmnFileName(updated.getBpmnFileName());
             p.setGroupName(updated.getGroupName());
             p.setMembers(updated.getMembers());
+            p.setExpiryDate(updated.getExpiryDate());
             return groupAssignedRepo.save(p);
         }).orElseThrow(() -> new RuntimeException("Process not found with id: " + id));
     }

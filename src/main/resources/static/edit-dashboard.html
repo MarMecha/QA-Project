@@ -93,6 +93,11 @@
             </div>
           </div>
 
+          <div class="col-md-6">
+            <label for="expiryDate" class="form-label">Ημερομηνία Λήξης</label>
+            <input type="date" class="form-control" id="expiryDate" name="expiryDate" required>
+          </div>
+
           <div class="col-md-12">
             <label for="description" class="form-label">Περιγραφή Διαδικασίας</label>
             <textarea class="form-control" id="description" rows="3" required></textarea>
@@ -248,6 +253,7 @@
             <th>Περιγραφή</th>
             <th>Υπάλληλος</th>
             <th>Θέση</th>
+            <th>Λήξη</th>
             <th>Διάγραμμα</th>
             <th>Ενέργειες</th>
           </tr>
@@ -263,6 +269,7 @@
             <th>Περιγραφή</th>
             <th>Group</th>
             <th>Μέλη</th>
+            <th>Λήξη</th>
             <th>Διάγραμμα</th>
             <th>Ενέργειες</th>
           </tr>
@@ -530,6 +537,7 @@
         const formData = new FormData();
         formData.append('processName', document.getElementById('processName').value);
         formData.append('description', document.getElementById('description').value);
+        formData.append('expiryDate', document.getElementById('expiryDate').value);
         const bpmnInput = document.getElementById('bpmnFile');
         const file = bpmnInput ? bpmnInput.files[0] : null;
         if (file) formData.append('bpmnFile', file);
