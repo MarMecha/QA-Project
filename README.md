@@ -197,20 +197,19 @@ http://localhost:8080
 
 ### QA Expert Dashboard
 
-(<img width="983" height="439" alt="image" src="https://github.com/user-attachments/assets/63109b21-f923-4328-a3ed-67e10161fa73" />
-)
+<img width="1907" height="865" alt="image" src="https://github.com/user-attachments/assets/8f6eb29e-a435-4fa2-a4cd-02c491fc39fc" />
 
 ### BPMN Modeling
 
-(Add screenshot)
+<img width="1898" height="861" alt="image" src="https://github.com/user-attachments/assets/62987b7d-88b3-44cc-bb4c-d491d553dc59" />
 
 ### Questionnaire Management
 
-(Add screenshot)
+<img width="1893" height="853" alt="image" src="https://github.com/user-attachments/assets/6bba3a6e-8936-41f3-bd7f-1493cb53e626" />
 
 ### Historical Analytics
 
-(Add screenshot)
+<img width="1891" height="864" alt="image" src="https://github.com/user-attachments/assets/a84a3e1a-2eb0-4629-b44e-307f7748c0a3" />
 
 ---
 
