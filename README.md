@@ -176,7 +176,7 @@ Organize staff participation and assign responsibilities.
 Clone repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/qa-assurance-platform.git
+git clone https://github.com/MarMecha/QA-Project.git
 ```
 
 Run backend
