@@ -144,19 +144,37 @@ Organize staff participation and assign responsibilities.
 
 ## User Roles
 
-### QA Expert
+### QA Expert (Administrator)
 
 - Manage questionnaires
-- Assign processes
-- Monitor execution
-- Review KPIs
-- Publish workflows
+- Create and publish BPMN workflows
+- Assign processes to employees or groups
+- Manage employees and groups
+- Define quality objectives (KPIs)
+- Monitor workflow execution
+- Review evaluation results and historical comparisons
+- Receive system notifications
 
 ### Employee
 
 - Execute assigned tasks
-- Participate in workflows
-- Receive notifications
+- Participate in individual and group workflows
+- Update task completion status
+- Collaborate through process-specific chat
+- Receive real-time notifications
+
+### Student
+
+- Complete evaluation questionnaires
+- Submit feedback on academic processes
+- Contribute data for quality assessment and KPI analysis
+
+### Process Leader
+
+- Coordinate assigned team workflows
+- Monitor team task progress
+- Participate in process discussions
+- Oversee workflow completion within the assigned process
 
 ---
 
@@ -168,6 +186,54 @@ Organize staff participation and assign responsibilities.
 - ORM Persistence
 - Role-Based Management
 - RESTful Communication
+
+---
+
+## API Overview
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/bpmn` | Retrieve all BPMN workflow diagrams |
+| `POST` | `/api/qa/assign` | Assign a workflow to an employee |
+| `POST` | `/api/qa/assign-group` | Assign a workflow to an employee group |
+| `GET` | `/api/employees` | Retrieve all employees |
+| `GET` | `/api/forms` | Retrieve all evaluation forms |
+| `POST` | `/api/responses` | Submit student evaluation responses |
+| `GET` | `/api/objectives` | Retrieve quality objectives |
+| `GET` | `/api/notifications` | Retrieve user notifications |
+| `POST` | `/api/chat` | Send a chat message within a workflow |
+| `POST` | `/api/bpmn/assign-status` | Update task assignment and completion status |
+
+---
+
+## Database
+
+The application uses a relational database to store quality assurance workflows, users, evaluation data, BPMN diagrams, notifications, and process collaboration data.
+
+### Main Entities / Tables
+
+| Entity / Table | Description |
+|---|---|
+| `Employee` | Stores employee/user information such as full name, position, username, and password. |
+| `EmployeeGroup` | Represents groups of employees used for group-based workflow assignments. |
+| `BpmnDiagram` | Stores BPMN workflow diagrams, XML content, publication status, and task progress metadata. |
+| `AssignedProcess` | Stores workflows assigned to individual employees. |
+| `GroupAssignedProcess` | Stores workflows assigned to employee groups. |
+| `TaskAssignmentStatus` | Tracks task assignments, assignees, completion status, and update timestamps. |
+| `EvaluationForm` | Stores evaluation questionnaires and their active/inactive status. |
+| `EvaluationResponse` | Stores student responses submitted for evaluation forms. |
+| `QualityObjective` | Stores quality objectives, target values, and related KPI information. |
+| `ProcessChatMessage` | Stores chat messages related to specific workflows/processes. |
+| `ProcessComment` | Stores comments attached to processes. |
+| `DeadlineNotification` | Stores deadline-related notifications for users. |
+
+### Database Summary
+
+- 12 main JPA entities
+- 14 database tables
+- Relational database design using PostgreSQL
+- ORM mapping with Spring Data JPA / Hibernate
+- Supports workflow tracking, evaluation management, notifications, chat, and KPI monitoring
 
 ---
 
