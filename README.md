@@ -1,4 +1,4 @@
-# QA Assurance Platform for Universities
+# Quality Assurance Management Platform
 
 A full-stack quality assurance and process management platform developed for higher education institutions.
 
@@ -69,9 +69,8 @@ Business Layer
 
 - Controllers
 - Services
-- models
-- repositories
-- DTO Mapping
+- Entities
+- Repositories
 
 ↓
 
@@ -186,9 +185,8 @@ Organize staff participation and assign responsibilities.
 
 - Layered Architecture
 - MVC Pattern
-- DTO Mapping
 - ORM Persistence
-- Role-Based Management
+- Role-Based Access Control (RBAC)
 - RESTful Communication
 
 ---
@@ -285,11 +283,11 @@ http://localhost:8080
 
 ## Future Improvements
 
-- Docker deployment
+- Docker containerization
+- JUnit & Mockito tests
 - Authentication hardening
-- Reporting dashboard
-- CI/CD integration
-- LMS integration
+- Swagger/OpenAPI
+- Reporting Dashboard
 - Advanced analytics
 
 ---
@@ -298,3 +296,7 @@ http://localhost:8080
 ## Author
 
 Mariol Mehalla
+
+LinkedIn : www.linkedin.com/in/mariol-mehalla-49a866234
+
+Email : mariosmi56@gmail.com
