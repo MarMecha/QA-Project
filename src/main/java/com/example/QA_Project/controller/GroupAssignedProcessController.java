@@ -1,5 +1,8 @@
 package com.example.QA_Project.controller;
 
+import com.example.QA_Project.dto.DtoMapper;
+import com.example.QA_Project.dto.GroupAssignedProcessDto;
+import com.example.QA_Project.dto.GroupAssignedProcessRequest;
 import com.example.QA_Project.model.EmployeeGroup;
 import com.example.QA_Project.model.GroupAssignedProcess;
 import com.example.QA_Project.model.Employee;
@@ -79,25 +82,30 @@ public class GroupAssignedProcessController {
 
         notificationService.notifyAssignmentToGroup(process);
         
-        return ResponseEntity.ok(process);
+        return ResponseEntity.ok(DtoMapper.toGroupAssignedProcessDto(process));
     }
 
 
     @GetMapping("/group-all")
-    public java.util.List<GroupAssignedProcess> getAllGroupProcesses() {
-        return groupAssignedRepo.findAll();
+    public java.util.List<GroupAssignedProcessDto> getAllGroupProcesses() {
+        return groupAssignedRepo.findAll().stream()
+                .map(DtoMapper::toGroupAssignedProcessDto)
+                .toList();
     }
 
     @PutMapping("/group/{id}")
-    public GroupAssignedProcess updateGroup(@PathVariable Long id, @RequestBody GroupAssignedProcess updated) {
+    public GroupAssignedProcessDto updateGroup(@PathVariable Long id, @RequestBody GroupAssignedProcessRequest updated) {
         return groupAssignedRepo.findById(id).map(p -> {
-            p.setProcessName(updated.getProcessName());
-            p.setDescription(updated.getDescription());
-            p.setBpmnFileName(updated.getBpmnFileName());
-            p.setGroupName(updated.getGroupName());
-            p.setMembers(updated.getMembers());
-            p.setExpiryDate(updated.getExpiryDate());
-            return groupAssignedRepo.save(p);
+            p.setProcessName(updated.processName());
+            p.setDescription(updated.description());
+            p.setBpmnFileName(updated.bpmnFileName());
+            p.setGroupName(updated.groupName());
+            p.setMembers(updated.members());
+            p.setExpiryDate(updated.expiryDate());
+            if (updated.leader() != null) {
+                p.setLeader(updated.leader());
+            }
+            return DtoMapper.toGroupAssignedProcessDto(groupAssignedRepo.save(p));
         }).orElseThrow(() -> new RuntimeException("Process not found with id: " + id));
     }
 

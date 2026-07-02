@@ -1,5 +1,8 @@
 package com.example.QA_Project.controller;
 
+import com.example.QA_Project.dto.DtoMapper;
+import com.example.QA_Project.dto.EmployeeGroupDto;
+import com.example.QA_Project.dto.EmployeeGroupRequest;
 import com.example.QA_Project.model.Employee;
 import com.example.QA_Project.model.EmployeeGroup;
 import com.example.QA_Project.repository.EmployeeGroupRepository;
@@ -20,31 +23,23 @@ public class EmployeeGroupController {
     private EmployeeRepository employeeRepo;
 
     @PostMapping
-    public EmployeeGroup create(@RequestBody GroupRequest request) {
+    public EmployeeGroupDto create(@RequestBody EmployeeGroupRequest request) {
         EmployeeGroup group = new EmployeeGroup();
-        group.setName(request.getName());
-        List<Employee> members = employeeRepo.findAllById(request.getMemberIds());
+        group.setName(request.name());
+        List<Employee> members = employeeRepo.findAllById(request.memberIds());
         group.setMembers(members);
-        return groupRepo.save(group);
+        return DtoMapper.toEmployeeGroupDto(groupRepo.save(group));
     }
 
     @GetMapping
-    public List<EmployeeGroup> getAll() {
-        return groupRepo.findAll();
+    public List<EmployeeGroupDto> getAll() {
+        return groupRepo.findAll().stream()
+                .map(DtoMapper::toEmployeeGroupDto)
+                .toList();
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         groupRepo.deleteById(id);
-    }
-
-    public static class GroupRequest {
-        private String name;
-        private List<Long> memberIds;
-
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public List<Long> getMemberIds() { return memberIds; }
-        public void setMemberIds(List<Long> memberIds) { this.memberIds = memberIds; }
     }
 }

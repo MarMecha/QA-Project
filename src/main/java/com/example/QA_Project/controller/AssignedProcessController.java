@@ -1,5 +1,9 @@
 package com.example.QA_Project.controller;
 
+import com.example.QA_Project.dto.AssignedProcessDto;
+import com.example.QA_Project.dto.AssignedProcessRequest;
+import com.example.QA_Project.dto.DtoMapper;
+import com.example.QA_Project.dto.EmployeeProcessesDto;
 import com.example.QA_Project.model.AssignedProcess;
 import com.example.QA_Project.model.Employee;
 import com.example.QA_Project.repository.AssignedProcessRepository;
@@ -45,7 +49,9 @@ public class AssignedProcessController {
         @RequestParam String expiryDate,
         @RequestParam(required = false) String diagramName,
         @RequestParam(value = "bpmnFile", required = false) MultipartFile file
-    ) {
+    ) 
+    
+    {
         Employee employee = employeeRepo.findByFullName(employeeName);
         if (employee == null) {
             return ResponseEntity.badRequest().body("Ο υπάλληλος δεν βρέθηκε.");
@@ -73,12 +79,14 @@ public class AssignedProcessController {
 
         notificationService.notifyAssignmentToIndividual(process);
 
-        return ResponseEntity.ok(process);
+        return ResponseEntity.ok(DtoMapper.toAssignedProcessDto(process));
     }
 
     @GetMapping("/all")
-    public List<AssignedProcess> getAllProcesses() {
-        return assignedRepo.findAll();
+    public List<AssignedProcessDto> getAllProcesses() {
+        return assignedRepo.findAll().stream()
+                .map(DtoMapper::toAssignedProcessDto)
+                .toList();
     }
 
     // Return individual and group QA processes for a specific employee
@@ -87,9 +95,10 @@ public class AssignedProcessController {
         return employeeRepo.findById(id).map(emp -> {
             var assigned = assignedRepo.findByFullName(emp.getFullName());
             var group = groupAssignedRepo.findByMembersContaining(emp.getFullName());
-            java.util.Map<String, java.util.List<?>> res = new java.util.HashMap<>();
-            res.put("assigned", assigned);
-            res.put("group", group);
+            EmployeeProcessesDto res = new EmployeeProcessesDto(
+                    assigned.stream().map(DtoMapper::toAssignedProcessDto).toList(),
+                    group.stream().map(DtoMapper::toGroupAssignedProcessDto).toList()
+            );
             return ResponseEntity.ok(res);
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -107,15 +116,18 @@ public class AssignedProcessController {
     }
     
       @PutMapping("/{id}")
-    public AssignedProcess update(@PathVariable Long id, @RequestBody AssignedProcess updated) {
+    public AssignedProcessDto update(@PathVariable Long id, @RequestBody AssignedProcessRequest updated) {
         return assignedRepo.findById(id).map(p -> {
-            p.setProcessName(updated.getProcessName());
-            p.setDescription(updated.getDescription());
-            p.setBpmnFileName(updated.getBpmnFileName());
-            p.setFullName(updated.getFullName());
-            p.setPosition(updated.getPosition());
-            p.setExpiryDate(updated.getExpiryDate());
-            return assignedRepo.save(p);
+            p.setProcessName(updated.processName());
+            p.setDescription(updated.description());
+            p.setBpmnFileName(updated.bpmnFileName());
+            p.setFullName(updated.fullName());
+            p.setPosition(updated.position());
+            p.setExpiryDate(updated.expiryDate());
+            if (updated.leader() != null) {
+                p.setLeader(updated.leader());
+            }
+            return DtoMapper.toAssignedProcessDto(assignedRepo.save(p));
         }).orElseThrow(() -> new RuntimeException("Process not found with id: " + id));
     }
 

@@ -38,10 +38,12 @@
       });
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem('employeeId', data.id);
-        localStorage.setItem('employeeName', data.fullName);
-        localStorage.setItem('employeePosition', data.position ?? '');
-        const redirect = data.position && data.position.toLowerCase().includes('qa')
+        const employee = data.employee;
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('employeeId', employee.id);
+        localStorage.setItem('employeeName', employee.fullName);
+        localStorage.setItem('employeePosition', employee.position ?? '');
+        const redirect = employee.position && employee.position.toLowerCase().includes('qa')
           ? 'admin-dashboard.html'
           : 'employee-dashboard.html';
         window.location.href = redirect;
